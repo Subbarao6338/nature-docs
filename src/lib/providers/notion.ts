@@ -40,17 +40,50 @@ export class NotionProvider extends DocumentProvider {
     try {
       const blocks = await notion.blocks.children.list({ block_id: doc.id });
 
-      // Extremely simple block to markdown conversion
+      // Improved block to markdown conversion
       let markdown = '';
       for (const block of blocks.results as any[]) {
-        if (block.type === 'paragraph') {
-          markdown += block.paragraph.rich_text.map((t: any) => t.plain_text).join('') + '\n\n';
-        } else if (block.type === 'heading_1') {
-          markdown += '# ' + block.heading_1.rich_text.map((t: any) => t.plain_text).join('') + '\n\n';
-        } else if (block.type === 'heading_2') {
-          markdown += '## ' + block.heading_2.rich_text.map((t: any) => t.plain_text).join('') + '\n\n';
+        const type = block.type;
+        const richText = block[type]?.rich_text || [];
+        const text = richText.map((t: any) => t.plain_text).join('');
+
+        switch (type) {
+          case 'paragraph':
+            markdown += text + '\n\n';
+            break;
+          case 'heading_1':
+            markdown += '# ' + text + '\n\n';
+            break;
+          case 'heading_2':
+            markdown += '## ' + text + '\n\n';
+            break;
+          case 'heading_3':
+            markdown += '### ' + text + '\n\n';
+            break;
+          case 'bulleted_list_item':
+            markdown += '* ' + text + '\n';
+            break;
+          case 'numbered_list_item':
+            markdown += '1. ' + text + '\n';
+            break;
+          case 'code':
+            markdown += '```' + (block.code.language || '') + '\n' + text + '\n```\n\n';
+            break;
+          case 'quote':
+            markdown += '> ' + text + '\n\n';
+            break;
+          case 'callout':
+            const icon = block.callout.icon?.emoji || 'ℹ️';
+            markdown += '> ' + icon + ' ' + text + '\n\n';
+            break;
+          case 'divider':
+            markdown += '---\n\n';
+            break;
+          case 'to_do':
+            const checked = block.to_do.checked ? '[x]' : '[ ]';
+            markdown += checked + ' ' + text + '\n';
+            break;
         }
-        // Add more block types as needed
       }
 
       return markdown || '# No content in Notion page';

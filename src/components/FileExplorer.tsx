@@ -10,7 +10,10 @@ import {
   MoreVertical,
   Upload,
   Calendar,
-  Layers
+  Layers,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useDropzone } from 'react-dropzone';
@@ -20,10 +23,22 @@ export const FileExplorer = () => {
   const { documents, setSelectedDoc, isLoading, selectedSource, addDocument } = useDocStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [sortBy, setSortBy] = useState<'name' | 'date'>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  const filteredDocs = documents.filter(doc =>
-    doc.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredDocs = documents
+    .filter(doc => doc.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    .sort((a, b) => {
+      if (sortBy === 'name') {
+        return sortOrder === 'asc'
+          ? a.name.localeCompare(b.name)
+          : b.name.localeCompare(a.name);
+      } else {
+        const dateA = new Date(a.updatedAt).getTime();
+        const dateB = new Date(b.updatedAt).getTime();
+        return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+      }
+    });
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     acceptedFiles.forEach((file) => {
@@ -70,9 +85,41 @@ export const FileExplorer = () => {
             />
           </div>
 
-          <div className="flex items-center bg-surface-variant/20 p-1 rounded-xl">
-            <button
-              onClick={() => setViewMode('grid')}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center bg-surface-variant/20 p-1 rounded-xl">
+              <button
+                onClick={() => {
+                  if (sortBy === 'name') setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                  else setSortBy('name');
+                }}
+                className={clsx(
+                  "p-2 rounded-lg transition-all flex items-center gap-1 text-xs font-medium",
+                  sortBy === 'name' ? "bg-surface shadow-sm text-primary" : "text-on-surface-variant hover:text-on-surface"
+                )}
+                title="Sort by Name"
+              >
+                Name
+                {sortBy === 'name' && (sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
+              </button>
+              <button
+                onClick={() => {
+                  if (sortBy === 'date') setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                  else setSortBy('date');
+                }}
+                className={clsx(
+                  "p-2 rounded-lg transition-all flex items-center gap-1 text-xs font-medium",
+                  sortBy === 'date' ? "bg-surface shadow-sm text-primary" : "text-on-surface-variant hover:text-on-surface"
+                )}
+                title="Sort by Date"
+              >
+                Date
+                {sortBy === 'date' && (sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
+              </button>
+            </div>
+
+            <div className="flex items-center bg-surface-variant/20 p-1 rounded-xl">
+              <button
+                onClick={() => setViewMode('grid')}
               className={clsx(
                 "p-2 rounded-lg transition-all",
                 viewMode === 'grid' ? "bg-surface shadow-sm text-primary" : "text-on-surface-variant hover:text-on-surface"
@@ -87,8 +134,9 @@ export const FileExplorer = () => {
                 viewMode === 'list' ? "bg-surface shadow-sm text-primary" : "text-on-surface-variant hover:text-on-surface"
               )}
             >
-              <ListIcon size={20} />
-            </button>
+                <ListIcon size={20} />
+              </button>
+            </div>
           </div>
         </div>
       </header>
