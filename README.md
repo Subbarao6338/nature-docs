@@ -30,9 +30,16 @@ A unified document reader for local and cloud sources.
 Add your API keys and OAuth credentials in `.env.local`:
 
 ```env
-NOTION_API_KEY=your_notion_key
+# Google Drive
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+# Notion
+NOTION_CLIENT_ID=your_notion_client_id
+NOTION_CLIENT_SECRET=your_notion_client_secret
+
+# General
+NEXT_PUBLIC_BASE_URL=http://localhost:3000
 ```
 
 ## License

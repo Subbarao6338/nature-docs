@@ -58,11 +58,20 @@ export default function Home() {
     }
   }, [theme, colorScheme]);
 
-  // Handle OAuth callbacks
+  // Handle OAuth callbacks and errors
   useEffect(() => {
     const fetchToken = async () => {
       const url = new URL(window.location.href);
       const source = url.searchParams.get('source');
+      const error = url.searchParams.get('error');
+
+      if (error === 'env_not_configured') {
+        const provider = url.searchParams.get('provider');
+        const providerName = provider === 'gdrive' ? 'Google Drive' : provider === 'notion' ? 'Notion' : 'the provider';
+        alert(`Configuration Error: ${providerName} is not properly configured. Please check your environment variables (CLIENT_ID, etc.).`);
+        window.history.replaceState({}, document.title, "/");
+        return;
+      }
 
       if (source && (source === 'gdrive' || source === 'notion')) {
         try {
