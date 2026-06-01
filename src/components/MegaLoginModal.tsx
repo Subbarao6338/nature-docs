@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, Lock, Mail } from 'lucide-react';
 import { useDocStore } from '@/store/useDocStore';
 
 export const MegaLoginModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
@@ -15,10 +15,6 @@ export const MegaLoginModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
-    // In a real app, you might want to verify credentials on the server or use a specific token
-    // megajs can be used directly in the browser if needed, but usually email/password are sensitive.
-    // For this demonstration, we'll store them in the account object (encrypted/securely in real life).
 
     const newAccount = {
       id: Math.random().toString(36).substring(7),
@@ -36,43 +32,50 @@ export const MegaLoginModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: 
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-      <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
-        <header className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h3 className="font-semibold text-gray-900">Connect Mega Account</h3>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
+      <div className="bg-surface w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-outline/10">
+        <header className="px-6 py-4 border-b border-outline/10 flex items-center justify-between">
+          <h3 className="font-semibold text-on-surface">Connect Mega Account</h3>
+          <button onClick={onClose} className="p-2 hover:bg-surface-variant rounded-full text-on-surface-variant transition-colors">
             <X size={20} />
           </button>
         </header>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input
-              type="email"
-              required
-              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-            <input
-              type="password"
-              required
-              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          <div className="space-y-4">
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" size={18} />
+              <input
+                type="email"
+                required
+                placeholder="Email Address"
+                className="w-full pl-10 pr-4 py-3 bg-surface-variant/30 text-on-surface rounded-2xl border-none focus:ring-2 focus:ring-primary transition-all outline-none"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" size={18} />
+              <input
+                type="password"
+                required
+                placeholder="Password"
+                className="w-full pl-10 pr-4 py-3 bg-surface-variant/30 text-on-surface rounded-2xl border-none focus:ring-2 focus:ring-primary transition-all outline-none"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
           </div>
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+            className="w-full bg-primary text-on-primary py-3 rounded-2xl font-bold hover:shadow-lg hover:bg-primary/90 transition-all disabled:opacity-50"
           >
             {isLoading ? 'Connecting...' : 'Connect Account'}
           </button>
+          <p className="text-[10px] text-center text-on-surface-variant">
+            By connecting, you agree to Nature Docs accessing your Mega.nz files.
+          </p>
         </form>
       </div>
     </div>

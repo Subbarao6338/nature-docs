@@ -2,12 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { DocItem } from '@/types';
-import { X, Maximize2, Download } from 'lucide-react';
-import { useDocStore } from '@/store/useDocStore';
+import { Download } from 'lucide-react';
 import mammoth from 'mammoth';
 
 export const DocxViewer = ({ doc }: { doc: DocItem }) => {
-  const { setSelectedDoc } = useDocStore();
   const [htmlContent, setHtmlContent] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,48 +47,33 @@ export const DocxViewer = ({ doc }: { doc: DocItem }) => {
   }, [doc.content]);
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white w-full max-w-5xl h-full max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
-        <header className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-              <span className="font-bold text-xs">DOCX</span>
-            </div>
-            <h3 className="font-semibold text-gray-900">{doc.name}</h3>
-          </div>
-          <div className="flex items-center gap-2">
-            <button className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors">
-              <Download size={20} />
-            </button>
-            <button className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors">
-              <Maximize2 size={20} />
-            </button>
-            <div className="w-px h-6 bg-gray-200 mx-2" />
-            <button
-              onClick={() => setSelectedDoc(null)}
-              className="p-2 hover:bg-red-50 hover:text-red-600 rounded-lg text-gray-500 transition-colors"
-            >
-              <X size={20} />
-            </button>
-          </div>
-        </header>
-
-        <div className="flex-1 overflow-y-auto p-12 bg-white">
-          {loading ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-            </div>
-          ) : error ? (
-            <div className="flex flex-col items-center justify-center h-full text-red-500">
-              <p>{error}</p>
-            </div>
-          ) : (
-            <article
-              className="prose prose-slate max-w-3xl mx-auto"
-              dangerouslySetInnerHTML={{ __html: htmlContent }}
-            />
-          )}
+    <div className="flex flex-col h-full bg-surface">
+      <div className="bg-surface px-6 py-2 border-b border-outline/10 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="px-2 py-0.5 bg-blue-500/10 text-blue-600 rounded text-[10px] font-bold uppercase">Word</span>
         </div>
+        <button className="p-2 hover:bg-primary-container text-primary rounded-xl transition-colors">
+          <Download size={20} />
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-6 md:p-12">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center h-full gap-4">
+            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+            <p className="text-on-surface-variant font-medium">Converting Word document...</p>
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center h-full text-red-500 gap-2">
+            <p className="font-bold">Error</p>
+            <p>{error}</p>
+          </div>
+        ) : (
+          <article
+            className="prose dark:prose-invert max-w-3xl mx-auto prose-headings:text-primary prose-a:text-primary"
+            dangerouslySetInnerHTML={{ __html: htmlContent }}
+          />
+        )}
       </div>
     </div>
   );
