@@ -7,6 +7,7 @@ import { FileExplorer } from '@/components/FileExplorer';
 
 const PdfViewer = dynamic(() => import('@/components/viewers/PdfViewer').then(mod => mod.PdfViewer), { ssr: false });
 const MarkdownViewer = dynamic(() => import('@/components/viewers/MarkdownViewer').then(mod => mod.MarkdownViewer), { ssr: false });
+const DocxViewer = dynamic(() => import('@/components/viewers/DocxViewer').then(mod => mod.DocxViewer), { ssr: false });
 import { HtmlViewer } from '@/components/viewers/HtmlViewer';
 import { useDocStore } from '@/store/useDocStore';
 import { GDriveProvider } from '@/lib/providers/gdrive';
@@ -24,17 +25,44 @@ export default function Home() {
     setLoading,
     addAccount,
     documents,
-    setSelectedDoc
+    setSelectedDoc,
+    setSelectedAccount
   } = useDocStore();
 
-  // Initialize with some dummy accounts for demo
+  // Handle OAuth callbacks
   useEffect(() => {
-    if (accounts.length === 0) {
-      addAccount({ id: 'acc-1', name: 'Personal Drive', source: 'gdrive', connected: true, accessToken: 'demo' });
-      addAccount({ id: 'acc-2', name: 'Work Notion', source: 'notion', connected: true, apiKey: 'demo' });
-      addAccount({ id: 'acc-3', name: 'Cloud Storage', source: 'mega', connected: true });
-    }
-  }, [accounts.length, addAccount]);
+    const fetchToken = async () => {
+      const url = new URL(window.location.href);
+      const source = url.searchParams.get('source');
+
+      if (source && (source === 'gdrive' || source === 'notion')) {
+        try {
+          const res = await fetch(`/api/auth/token?source=${source}`);
+          if (res.ok) {
+            const { accessToken } = await res.json();
+            const id = Math.random().toString(36).substring(7);
+            const name = url.searchParams.get('workspaceName') || (source === 'gdrive' ? 'Google Drive' : 'Notion');
+
+            addAccount({
+              id,
+              name,
+              source: source as any,
+              connected: true,
+              accessToken
+            });
+            setSelectedAccount(id);
+          }
+        } catch (error) {
+          console.error('Failed to fetch token from cookie:', error);
+        } finally {
+          // Clean up URL
+          window.history.replaceState({}, document.title, "/");
+        }
+      }
+    };
+
+    fetchToken();
+  }, [addAccount, setSelectedAccount]);
 
   useEffect(() => {
     const fetchDocs = async () => {
@@ -111,6 +139,9 @@ export default function Home() {
     }
     if (selectedDoc.type.includes('html') || selectedDoc.name.endsWith('.html')) {
       return <HtmlViewer doc={selectedDoc} />;
+    }
+    if (selectedDoc.type.includes('word') || selectedDoc.name.endsWith('.docx')) {
+      return <DocxViewer doc={selectedDoc} />;
     }
 
     return null;

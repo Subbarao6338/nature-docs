@@ -1,0 +1,26 @@
+
+> app@1.0.0 dev
+> next dev
+
+   ▲ Next.js 15.5.18
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.0.2:3000
+
+ ✓ Starting...
+ ✓ Ready in 1965ms
+ ○ Compiling / ...
+ ✓ Compiled / in 8.8s (1618 modules)
+ GET / 200 in 9405ms
+ ○ Compiling /api/auth/gdrive ...
+ ✓ Compiled /api/auth/gdrive in 12.4s (2737 modules)
+ GET /api/auth/gdrive 307 in 15992ms
+ GET / 200 in 151ms
+ GET / 200 in 2603ms
+ ✓ Compiled in 447ms (719 modules)
+ ✓ Compiled in 892ms (719 modules)
+ ✓ Compiled in 345ms (719 modules)
+ ✓ Compiled in 1871ms (1605 modules)
+ ✓ Compiled in 2.9s (1619 modules)
+ ✓ Compiled in 181ms (719 modules)
+ ✓ Compiled in 373ms (1619 modules)
+ ✓ Compiled in 842ms (1619 modules)

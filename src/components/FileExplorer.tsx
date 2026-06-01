@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useDocStore } from '@/store/useDocStore';
 import {
   FileText,
@@ -9,18 +9,48 @@ import {
   List as ListIcon,
   MoreVertical,
   Download,
-  Trash
+  Trash,
+  Upload
 } from 'lucide-react';
 import { clsx } from 'clsx';
+import { useDropzone } from 'react-dropzone';
 
 export const FileExplorer = () => {
-  const { documents, setSelectedDoc, isLoading } = useDocStore();
+  const { documents, setSelectedDoc, isLoading, selectedSource, addDocument } = useDocStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
 
   const filteredDocs = documents.filter(doc =>
     doc.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    acceptedFiles.forEach((file) => {
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        const content = reader.result as ArrayBuffer;
+        const newDoc = {
+          id: Math.random().toString(36).substring(7),
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          updatedAt: new Date().toISOString(),
+          source: 'local' as const,
+          accountId: 'local',
+          content: content
+        };
+        addDocument(newDoc);
+      };
+
+      reader.readAsArrayBuffer(file);
+    });
+  }, [addDocument]);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    noClick: true,
+  });
 
   return (
     <div className="flex-1 flex flex-col bg-gray-50 h-screen">
@@ -52,7 +82,28 @@ export const FileExplorer = () => {
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto p-6">
+      <main className="flex-1 overflow-y-auto p-6" {...getRootProps()}>
+        <input {...getInputProps()} />
+
+        {selectedSource === 'local' && (
+          <div
+            onClick={() => {
+              const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+              input?.click();
+            }}
+            className={clsx(
+              "mb-6 border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center transition-colors cursor-pointer",
+              isDragActive ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-400 hover:bg-gray-50"
+            )}
+          >
+            <Upload size={32} className="text-gray-400 mb-2" />
+            <p className="text-sm text-gray-600">
+              {isDragActive ? "Drop files here" : "Drag & drop files or click to upload"}
+            </p>
+            <p className="text-xs text-gray-400 mt-1">PDF, Markdown, HTML, DOCX</p>
+          </div>
+        )}
+
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
