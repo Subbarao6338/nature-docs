@@ -8,17 +8,18 @@ import {
   Grid,
   List as ListIcon,
   MoreVertical,
-  Download,
-  Trash,
-  Upload
+  Upload,
+  Calendar,
+  Layers
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useDropzone } from 'react-dropzone';
+import { motion } from 'framer-motion';
 
 export const FileExplorer = () => {
   const { documents, setSelectedDoc, isLoading, selectedSource, addDocument } = useDocStore();
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const filteredDocs = documents.filter(doc =>
     doc.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -53,120 +54,170 @@ export const FileExplorer = () => {
   });
 
   return (
-    <div className="flex-1 flex flex-col bg-gray-50 h-screen">
-      <header className="bg-white border-b border-gray-200 p-4 flex items-center justify-between">
-        <div className="relative w-96">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-          <input
-            type="text"
-            placeholder="Search documents..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
+    <div className="flex-1 flex flex-col bg-surface h-full min-w-0" {...getRootProps()}>
+      <input {...getInputProps()} />
 
-        <div className="flex items-center gap-2 border border-gray-200 rounded-lg p-1 bg-gray-50">
-          <button
-            onClick={() => setViewMode('grid')}
-            className={clsx("p-1.5 rounded", viewMode === 'grid' ? "bg-white shadow-sm" : "text-gray-500")}
-          >
-            <Grid size={18} />
-          </button>
-          <button
-            onClick={() => setViewMode('list')}
-            className={clsx("p-1.5 rounded", viewMode === 'list' ? "bg-white shadow-sm" : "text-gray-500")}
-          >
-            <ListIcon size={18} />
-          </button>
+      <header className="p-4 md:p-6 space-y-4">
+        <div className="flex items-center justify-between gap-4">
+          <div className="relative flex-1 max-w-2xl">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant" size={20} />
+            <input
+              type="text"
+              placeholder="Search your library..."
+              className="w-full pl-12 pr-4 py-3 bg-surface-variant/30 text-on-surface rounded-2xl border-none focus:ring-2 focus:ring-primary transition-all outline-none"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          <div className="flex items-center bg-surface-variant/20 p-1 rounded-xl">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={clsx(
+                "p-2 rounded-lg transition-all",
+                viewMode === 'grid' ? "bg-surface shadow-sm text-primary" : "text-on-surface-variant hover:text-on-surface"
+              )}
+            >
+              <Grid size={20} />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={clsx(
+                "p-2 rounded-lg transition-all",
+                viewMode === 'list' ? "bg-surface shadow-sm text-primary" : "text-on-surface-variant hover:text-on-surface"
+              )}
+            >
+              <ListIcon size={20} />
+            </button>
+          </div>
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto p-6" {...getRootProps()}>
-        <input {...getInputProps()} />
-
+      <main className="flex-1 overflow-y-auto px-4 md:px-6 pb-24 md:pb-6">
         {selectedSource === 'local' && (
-          <div
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
             onClick={() => {
               const input = document.querySelector('input[type="file"]') as HTMLInputElement;
               input?.click();
             }}
             className={clsx(
-              "mb-6 border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center transition-colors cursor-pointer",
-              isDragActive ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-400 hover:bg-gray-50"
+              "mb-8 border-2 border-dashed rounded-3xl p-10 flex flex-col items-center justify-center transition-all cursor-pointer group",
+              isDragActive
+                ? "border-primary bg-primary-container/30"
+                : "border-outline/20 hover:border-primary/50 hover:bg-surface-variant/20"
             )}
           >
-            <Upload size={32} className="text-gray-400 mb-2" />
-            <p className="text-sm text-gray-600">
-              {isDragActive ? "Drop files here" : "Drag & drop files or click to upload"}
+            <div className="p-4 bg-primary-container text-on-primary-container rounded-2xl mb-4 group-hover:scale-110 transition-transform">
+              <Upload size={32} />
+            </div>
+            <p className="text-lg font-medium text-on-surface text-center">
+              {isDragActive ? "Drop to add files" : "Click or drag files to upload"}
             </p>
-            <p className="text-xs text-gray-400 mt-1">PDF, Markdown, HTML, DOCX</p>
-          </div>
+            <p className="text-sm text-on-surface-variant mt-2">Support for PDF, MD, HTML, and DOCX</p>
+          </motion.div>
         )}
 
         {isLoading ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+          <div className="flex flex-col items-center justify-center h-64 gap-4">
+            <div className="relative w-12 h-12">
+              <div className="absolute inset-0 rounded-full border-4 border-primary/20" />
+              <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+            </div>
+            <p className="text-on-surface-variant font-medium">Fetching documents...</p>
           </div>
         ) : filteredDocs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-gray-500">
-            <FileText size={48} className="mb-4 opacity-20" />
-            <p>No documents found</p>
+          <div className="flex flex-col items-center justify-center h-64 text-on-surface-variant">
+            <div className="p-6 bg-surface-variant/20 rounded-full mb-6">
+              <FileText size={64} className="opacity-20" />
+            </div>
+            <h3 className="text-xl font-semibold text-on-surface">No documents found</h3>
+            <p className="mt-2 text-center max-w-xs">Try adjusting your search or select a different source.</p>
           </div>
         ) : viewMode === 'list' ? (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
-                  <th className="px-6 py-3 font-semibold">Name</th>
-                  <th className="px-6 py-3 font-semibold">Updated</th>
-                  <th className="px-6 py-3 font-semibold">Source</th>
-                  <th className="px-6 py-3 font-semibold"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {filteredDocs.map((doc) => (
-                  <tr
-                    key={doc.id}
-                    className="hover:bg-blue-50 cursor-pointer transition-colors"
-                    onClick={() => setSelectedDoc(doc)}
-                  >
-                    <td className="px-6 py-4 flex items-center gap-3">
-                      <FileText size={20} className="text-blue-500" />
-                      <span className="font-medium text-gray-900">{doc.name}</span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {new Date(doc.updatedAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="px-2 py-1 bg-gray-100 rounded text-xs text-gray-600 capitalize">
-                        {doc.source}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <button className="p-1 hover:bg-gray-100 rounded text-gray-400">
-                        <MoreVertical size={16} />
-                      </button>
-                    </td>
+          <div className="bg-surface border border-outline/10 rounded-3xl overflow-hidden shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-outline/10 bg-surface-variant/10">
+                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-on-surface-variant">Name</th>
+                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-on-surface-variant hidden md:table-cell">Updated</th>
+                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-on-surface-variant hidden sm:table-cell">Source</th>
+                    <th className="px-6 py-4 w-10"></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-outline/5">
+                  {filteredDocs.map((doc) => (
+                    <tr
+                      key={doc.id}
+                      className="hover:bg-primary-container/20 cursor-pointer transition-colors group"
+                      onClick={() => setSelectedDoc(doc)}
+                    >
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-4">
+                          <div className="p-2 bg-secondary-container text-on-secondary-container rounded-xl">
+                            <FileText size={20} />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-on-surface truncate max-w-[150px] md:max-w-md">{doc.name}</p>
+                            <p className="text-xs text-on-surface-variant md:hidden">
+                              {new Date(doc.updatedAt).toLocaleDateString()} • {doc.source}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-on-surface-variant hidden md:table-cell">
+                        <div className="flex items-center gap-2">
+                          <Calendar size={14} />
+                          {new Date(doc.updatedAt).toLocaleDateString()}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 hidden sm:table-cell">
+                        <span className="px-3 py-1 bg-surface-variant text-on-surface-variant rounded-full text-xs font-medium capitalize">
+                          {doc.source}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button className="p-2 hover:bg-surface-variant rounded-full text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">
+                          <MoreVertical size={18} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 md:gap-6">
             {filteredDocs.map((doc) => (
-              <div
+              <motion.div
                 key={doc.id}
-                className="bg-white p-4 rounded-xl border border-gray-200 hover:border-blue-500 hover:shadow-md cursor-pointer transition-all group"
+                layout
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                whileHover={{ y: -4 }}
+                className="group relative bg-surface border border-outline/10 p-3 rounded-3xl hover:border-primary/50 hover:shadow-xl transition-all cursor-pointer"
                 onClick={() => setSelectedDoc(doc)}
               >
-                <div className="aspect-[3/4] bg-gray-50 rounded-lg mb-3 flex items-center justify-center">
-                  <FileText size={40} className="text-blue-300 group-hover:text-blue-500 transition-colors" />
+                <div className="aspect-[4/5] bg-surface-variant/20 rounded-2xl mb-4 flex items-center justify-center relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <FileText size={48} className="text-primary/40 group-hover:text-primary/60 transition-colors" />
+                  <div className="absolute bottom-2 right-2 p-1.5 bg-surface/80 backdrop-blur-sm rounded-lg shadow-sm">
+                    <span className="text-[10px] font-bold uppercase text-on-surface-variant">{doc.type.split('/')[1] || doc.name.split('.').pop()}</span>
+                  </div>
                 </div>
-                <p className="text-sm font-medium text-gray-900 truncate">{doc.name}</p>
-                <p className="text-xs text-gray-500 mt-1 capitalize">{doc.source}</p>
-              </div>
+                <div className="px-1">
+                  <p className="text-sm font-bold text-on-surface truncate">{doc.name}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-[10px] font-medium text-on-surface-variant uppercase flex items-center gap-1">
+                      <Layers size={10} />
+                      {doc.source}
+                    </span>
+                  </div>
+                </div>
+              </motion.div>
             ))}
           </div>
         )}

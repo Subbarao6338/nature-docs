@@ -1,77 +1,100 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { DocItem } from '@/types';
-import { X, Maximize2, Download, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useDocStore } from '@/store/useDocStore';
+import { Download, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from 'lucide-react';
 import { Document, Page, pdfjs } from 'react-pdf';
 
 // Set up the worker for react-pdf
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 export const PdfViewer = ({ doc }: { doc: DocItem }) => {
-  const { setSelectedDoc } = useDocStore();
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
+  const [scale, setScale] = useState(1.0);
+  const [containerWidth, setContainerWidth] = useState<number>(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const updateWidth = () => {
+      if (containerRef.current) {
+        setContainerWidth(containerRef.current.clientWidth - 48); // minus padding
+      }
+    };
+
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, []);
 
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
     setNumPages(numPages);
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white w-full max-w-5xl h-full max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
-        <header className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-50 text-red-600 rounded-lg">
-              <span className="font-bold text-xs">PDF</span>
-            </div>
-            <h3 className="font-semibold text-gray-900">{doc.name}</h3>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2 mr-4">
-              <button
-                disabled={pageNumber <= 1}
-                onClick={() => setPageNumber(prev => prev - 1)}
-                className="p-1 hover:bg-gray-100 disabled:opacity-30 rounded"
-              >
-                <ChevronLeft size={20} />
-              </button>
-              <span className="text-sm">Page {pageNumber} of {numPages || '--'}</span>
-              <button
-                disabled={numPages ? pageNumber >= numPages : true}
-                onClick={() => setPageNumber(prev => prev + 1)}
-                className="p-1 hover:bg-gray-100 disabled:opacity-30 rounded"
-              >
-                <ChevronRight size={20} />
-              </button>
-            </div>
-            <button className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors">
-              <Download size={20} />
-            </button>
-            <button className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors">
-              <Maximize2 size={20} />
-            </button>
-            <div className="w-px h-6 bg-gray-200 mx-2" />
+    <div className="flex flex-col h-full bg-surface-variant/10">
+      <div className="bg-surface px-4 py-2 border-b border-outline/10 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center bg-surface-variant/30 rounded-xl p-1">
             <button
-              onClick={() => setSelectedDoc(null)}
-              className="p-2 hover:bg-red-50 hover:text-red-600 rounded-lg text-gray-500 transition-colors"
+              disabled={pageNumber <= 1}
+              onClick={() => setPageNumber(prev => prev - 1)}
+              className="p-1.5 hover:bg-surface disabled:opacity-30 rounded-lg transition-colors"
             >
-              <X size={20} />
+              <ChevronLeft size={18} />
+            </button>
+            <span className="px-3 text-sm font-medium">
+              {pageNumber} / {numPages || '--'}
+            </span>
+            <button
+              disabled={numPages ? pageNumber >= numPages : true}
+              onClick={() => setPageNumber(prev => prev + 1)}
+              className="p-1.5 hover:bg-surface disabled:opacity-30 rounded-lg transition-colors"
+            >
+              <ChevronRight size={18} />
             </button>
           </div>
-        </header>
 
-        <div className="flex-1 bg-gray-100 overflow-y-auto p-8 flex justify-center">
-          <div className="bg-white w-full max-w-3xl shadow-lg min-h-full p-4 flex flex-col items-center">
-             <Document
-               file={doc.url || doc.content}
-               onLoadSuccess={onDocumentLoadSuccess}
-               loading={<div className="p-20">Loading PDF...</div>}
-             >
-               <Page pageNumber={pageNumber} renderTextLayer={true} renderAnnotationLayer={true} />
-             </Document>
+          <div className="hidden sm:flex items-center bg-surface-variant/30 rounded-xl p-1">
+            <button onClick={() => setScale(s => Math.max(0.5, s - 0.1))} className="p-1.5 hover:bg-surface rounded-lg">
+              <ZoomOut size={18} />
+            </button>
+            <span className="px-2 text-xs font-bold w-12 text-center">{Math.round(scale * 100)}%</span>
+            <button onClick={() => setScale(s => Math.min(2.0, s + 0.1))} className="p-1.5 hover:bg-surface rounded-lg">
+              <ZoomIn size={18} />
+            </button>
           </div>
+        </div>
+
+        <button className="p-2 hover:bg-primary-container text-primary rounded-xl transition-colors">
+          <Download size={20} />
+        </button>
+      </div>
+
+      <div
+        ref={containerRef}
+        className="flex-1 overflow-auto p-4 md:p-8 flex justify-center"
+      >
+        <div className="bg-white shadow-2xl rounded-sm">
+          <Document
+            file={doc.url || doc.content}
+            onLoadSuccess={onDocumentLoadSuccess}
+            loading={
+              <div className="flex flex-col items-center justify-center p-20 gap-4">
+                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                <p className="text-on-surface-variant animate-pulse font-medium">Preparing document...</p>
+              </div>
+            }
+          >
+            <Page
+              pageNumber={pageNumber}
+              scale={scale}
+              width={containerWidth > 0 ? Math.min(containerWidth, 800 * scale) : undefined}
+              renderTextLayer={true}
+              renderAnnotationLayer={true}
+              className="max-w-full"
+            />
+          </Document>
         </div>
       </div>
     </div>

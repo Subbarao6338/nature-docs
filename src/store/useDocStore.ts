@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { DocItem, Account, SourceType } from '@/types';
 
+export type Theme = 'light' | 'dark' | 'system';
+export type ColorScheme = 'blue' | 'green' | 'purple' | 'orange';
+
 interface DocState {
   accounts: Account[];
   selectedSource: SourceType;
@@ -8,6 +11,10 @@ interface DocState {
   documents: DocItem[];
   selectedDoc: DocItem | null;
   isLoading: boolean;
+
+  // Theme state
+  theme: Theme;
+  colorScheme: ColorScheme;
 
   // Actions
   addAccount: (account: Account) => void;
@@ -18,6 +25,10 @@ interface DocState {
   addDocument: (doc: DocItem) => void;
   setSelectedDoc: (doc: DocItem | null) => void;
   setLoading: (loading: boolean) => void;
+
+  // Theme actions
+  setTheme: (theme: Theme) => void;
+  setColorScheme: (scheme: ColorScheme) => void;
 }
 
 export const useDocStore = create<DocState>((set) => ({
@@ -27,6 +38,9 @@ export const useDocStore = create<DocState>((set) => ({
   documents: [],
   selectedDoc: null,
   isLoading: false,
+
+  theme: 'system',
+  colorScheme: 'blue',
 
   addAccount: (account) => set((state) => ({
     accounts: [...state.accounts, account]
@@ -61,4 +75,7 @@ export const useDocStore = create<DocState>((set) => ({
   setLoading: (loading) => set({
     isLoading: loading
   }),
+
+  setTheme: (theme) => set({ theme }),
+  setColorScheme: (scheme) => set({ colorScheme: scheme }),
 }));
