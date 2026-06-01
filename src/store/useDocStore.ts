@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { DocItem, Account, SourceType } from '@/types';
 
 export type Theme = 'light' | 'dark' | 'system';
@@ -31,51 +32,63 @@ interface DocState {
   setColorScheme: (scheme: ColorScheme) => void;
 }
 
-export const useDocStore = create<DocState>((set) => ({
-  accounts: [],
-  selectedSource: 'local',
-  selectedAccount: null,
-  documents: [],
-  selectedDoc: null,
-  isLoading: false,
+export const useDocStore = create<DocState>()(
+  persist(
+    (set) => ({
+      accounts: [],
+      selectedSource: 'local',
+      selectedAccount: null,
+      documents: [],
+      selectedDoc: null,
+      isLoading: false,
 
-  theme: 'system',
-  colorScheme: 'blue',
+      theme: 'system',
+      colorScheme: 'blue',
 
-  addAccount: (account) => set((state) => ({
-    accounts: [...state.accounts, account]
-  })),
+      addAccount: (account) => set((state) => ({
+        accounts: [...state.accounts, account]
+      })),
 
-  removeAccount: (accountId) => set((state) => ({
-    accounts: state.accounts.filter(a => a.id !== accountId)
-  })),
+      removeAccount: (accountId) => set((state) => ({
+        accounts: state.accounts.filter(a => a.id !== accountId)
+      })),
 
-  setSelectedSource: (source) => set({
-    selectedSource: source,
-    selectedAccount: null,
-    documents: []
-  }),
+      setSelectedSource: (source) => set({
+        selectedSource: source,
+        selectedAccount: null,
+        documents: []
+      }),
 
-  setSelectedAccount: (accountId) => set({
-    selectedAccount: accountId
-  }),
+      setSelectedAccount: (accountId) => set({
+        selectedAccount: accountId
+      }),
 
-  setDocuments: (docs) => set({
-    documents: docs
-  }),
+      setDocuments: (docs) => set({
+        documents: docs
+      }),
 
-  addDocument: (doc) => set((state) => ({
-    documents: [...state.documents, doc]
-  })),
+      addDocument: (doc) => set((state) => ({
+        documents: [...state.documents, doc]
+      })),
 
-  setSelectedDoc: (doc) => set({
-    selectedDoc: doc
-  }),
+      setSelectedDoc: (doc) => set({
+        selectedDoc: doc
+      }),
 
-  setLoading: (loading) => set({
-    isLoading: loading
-  }),
+      setLoading: (loading) => set({
+        isLoading: loading
+      }),
 
-  setTheme: (theme) => set({ theme }),
-  setColorScheme: (scheme) => set({ colorScheme: scheme }),
-}));
+      setTheme: (theme) => set({ theme }),
+      setColorScheme: (scheme) => set({ colorScheme: scheme }),
+    }),
+    {
+      name: 'nature-docs-storage',
+      partialize: (state) => ({
+        accounts: state.accounts,
+        theme: state.theme,
+        colorScheme: state.colorScheme,
+      }),
+    }
+  )
+);
