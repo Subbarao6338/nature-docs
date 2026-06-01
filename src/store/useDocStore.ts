@@ -15,6 +15,7 @@ interface DocState {
   setSelectedSource: (source: SourceType) => void;
   setSelectedAccount: (accountId: string | null) => void;
   setDocuments: (docs: DocItem[]) => void;
+  addDocument: (doc: DocItem) => void;
   setSelectedDoc: (doc: DocItem | null) => void;
   setLoading: (loading: boolean) => void;
 }
@@ -48,6 +49,10 @@ export const useDocStore = create<DocState>((set) => ({
   setDocuments: (docs) => set({
     documents: docs
   }),
+
+  addDocument: (doc) => set((state) => ({
+    documents: [...state.documents, doc]
+  })),
 
   setSelectedDoc: (doc) => set({
     selectedDoc: doc

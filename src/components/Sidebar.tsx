@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useDocStore } from '@/store/useDocStore';
 import { SourceType } from '@/types';
+import { MegaLoginModal } from './MegaLoginModal';
 import {
   HardDrive,
   Cloud,
@@ -21,15 +22,29 @@ const sources: { type: SourceType; icon: React.ReactNode; label: string }[] = [
 ];
 
 export const Sidebar = () => {
+  const [isMegaModalOpen, setIsMegaModalOpen] = useState(false);
   const {
     selectedSource,
     setSelectedSource,
     accounts,
     selectedAccount,
-    setSelectedAccount
+    setSelectedAccount,
+    addAccount
   } = useDocStore();
 
   const filteredAccounts = accounts.filter(a => a.source === selectedSource);
+
+  const handleAddAccount = () => {
+    if (selectedSource === 'local') return;
+
+    if (selectedSource === 'mega') {
+      setIsMegaModalOpen(true);
+      return;
+    }
+
+    // Redirect to OAuth routes
+    window.location.href = `/api/auth/${selectedSource}`;
+  };
 
   return (
     <div className="w-64 bg-gray-900 text-white h-screen flex flex-col">
@@ -69,9 +84,15 @@ export const Sidebar = () => {
             <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
               Accounts
             </h2>
-            <button className="text-gray-400 hover:text-white">
-              <Plus size={16} />
-            </button>
+            {selectedSource !== 'local' && (
+              <button
+                onClick={handleAddAccount}
+                className="text-gray-400 hover:text-white transition-colors"
+                title="Add account"
+              >
+                <Plus size={16} />
+              </button>
+            )}
           </div>
           <div className="space-y-1">
             {filteredAccounts.length === 0 ? (
@@ -103,6 +124,8 @@ export const Sidebar = () => {
           <span>Settings</span>
         </button>
       </div>
+
+      <MegaLoginModal isOpen={isMegaModalOpen} onClose={() => setIsMegaModalOpen(false)} />
     </div>
   );
 };

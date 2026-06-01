@@ -20,6 +20,8 @@ export interface Account {
   accessToken?: string;
   refreshToken?: string;
   apiKey?: string;
+  email?: string;
+  password?: string;
   connected: boolean;
 }
 

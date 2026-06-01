@@ -1,35 +1,65 @@
 import { DocItem, Account } from '@/types';
 import { DocumentProvider } from './base';
-import { google } from 'googleapis';
 
 export class GDriveProvider extends DocumentProvider {
   async listDocuments(account: Account): Promise<DocItem[]> {
     if (!account.accessToken) return [];
 
-    // In a real app with a backend/proxy:
-    // const auth = new google.auth.OAuth2();
-    // auth.setCredentials({ access_token: account.accessToken });
-    // const drive = google.drive({ version: 'v3', auth });
-    // const res = await drive.files.list({ pageSize: 10, fields: 'files(id, name, mimeType, size, modifiedTime)' });
+    try {
+      // Use standard fetch instead of googleapis library in client-side code
+      const response = await fetch(
+        `https://www.googleapis.com/drive/v3/files?pageSize=50&fields=files(id,name,mimeType,modifiedTime,size)&q=${encodeURIComponent(
+          "mimeType = 'application/pdf' or mimeType = 'text/markdown' or mimeType = 'text/html' or mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'"
+        )}`,
+        {
+          headers: {
+            Authorization: `Bearer ${account.accessToken}`,
+          },
+        }
+      );
 
-    console.log('Fetching from Google Drive with token:', account.accessToken);
-
-    return [
-      {
-        id: 'g1',
-        name: 'Google Drive Sample.pdf',
-        type: 'application/pdf',
-        updatedAt: new Date().toISOString(),
-        source: 'gdrive',
-        accountId: account.id,
-        url: 'https://raw.githubusercontent.com/mozilla/pdf.js/ba2edeae/web/compressed.tracemonkey-pldi-09.pdf'
+      if (!response.ok) {
+        throw new Error(`GDrive API error: ${response.statusText}`);
       }
-    ];
+
+      const data = await response.json();
+      const files = data.files || [];
+      return files.map((file: any) => ({
+        id: file.id,
+        name: file.name,
+        type: file.mimeType,
+        updatedAt: file.modifiedTime,
+        size: file.size ? parseInt(file.size) : undefined,
+        source: 'gdrive',
+        accountId: account.id
+      }));
+    } catch (error) {
+      console.error('GDrive listDocuments error:', error);
+      return [];
+    }
   }
 
   async getDocumentContent(doc: DocItem, account: Account): Promise<string | ArrayBuffer> {
-    if (doc.url) return doc.url;
-    // Implementation for downloading from GDrive...
-    return new ArrayBuffer(0);
+    if (!account.accessToken) throw new Error('Missing access token');
+
+    try {
+      const response = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${doc.id}?alt=media`,
+        {
+          headers: {
+            Authorization: `Bearer ${account.accessToken}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`GDrive API error: ${response.statusText}`);
+      }
+
+      return await response.arrayBuffer();
+    } catch (error) {
+      console.error('GDrive getDocumentContent error:', error);
+      throw error;
+    }
   }
 }
