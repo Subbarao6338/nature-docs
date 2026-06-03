@@ -15,16 +15,25 @@ export class NotionProvider extends DocumentProvider {
         sort: { direction: 'descending', timestamp: 'last_edited_time' }
       });
 
-      return response.results.map((page: any) => ({
-        id: page.id,
-        name: page.properties?.title?.title?.[0]?.plain_text ||
-              page.properties?.Name?.title?.[0]?.plain_text ||
-              'Untitled',
-        type: 'text/markdown',
-        updatedAt: page.last_edited_time,
-        source: 'notion',
-        accountId: account.id
-      }));
+      return response.results.map((page: any) => {
+        const properties = page.properties;
+        let title = 'Untitled';
+
+        // Notion title can be in different properties depending on the page setup
+        const titleProp = properties?.title || properties?.Name || properties?.Page;
+        if (titleProp?.title?.[0]?.plain_text) {
+          title = titleProp.title[0].plain_text;
+        }
+
+        return {
+          id: page.id,
+          name: title,
+          type: 'text/markdown',
+          updatedAt: page.last_edited_time,
+          source: 'notion',
+          accountId: account.id
+        };
+      });
     } catch (error) {
       console.error('Notion fetch error:', error);
       return [];

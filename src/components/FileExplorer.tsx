@@ -18,9 +18,12 @@ import {
 import { clsx } from 'clsx';
 import { useDropzone } from 'react-dropzone';
 import { motion } from 'framer-motion';
+import { storage } from '@/lib/storage';
+import { DocItem } from '@/types';
+import { Trash2 } from 'lucide-react';
 
 export const FileExplorer = () => {
-  const { documents, setSelectedDoc, isLoading, selectedSource, addDocument } = useDocStore();
+  const { documents, setSelectedDoc, isLoading, selectedSource, addDocument, setDocuments, removeDocument } = useDocStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState<'name' | 'date'>('date');
@@ -44,9 +47,9 @@ export const FileExplorer = () => {
     acceptedFiles.forEach((file) => {
       const reader = new FileReader();
 
-      reader.onload = () => {
+      reader.onload = async () => {
         const content = reader.result as ArrayBuffer;
-        const newDoc = {
+        const newDoc: DocItem = {
           id: Math.random().toString(36).substring(7),
           name: file.name,
           type: file.type,
@@ -56,6 +59,7 @@ export const FileExplorer = () => {
           accountId: 'local',
           content: content
         };
+        await storage.saveDocument(newDoc);
         addDocument(newDoc);
       };
 
@@ -67,6 +71,16 @@ export const FileExplorer = () => {
     onDrop,
     noClick: true,
   });
+
+  const handleDelete = async (e: React.MouseEvent, docId: string) => {
+    e.stopPropagation();
+    if (confirm('Are you sure you want to delete this document?')) {
+      if (selectedSource === 'local') {
+        await storage.removeDocument(docId);
+      }
+      removeDocument(docId);
+    }
+  };
 
   return (
     <div className="flex-1 flex flex-col bg-surface h-full min-w-0" {...getRootProps()}>
@@ -227,9 +241,20 @@ export const FileExplorer = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <button className="p-2 hover:bg-surface-variant rounded-full text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">
-                          <MoreVertical size={18} />
-                        </button>
+                        <div className="flex justify-end gap-2">
+                          {doc.source === 'local' && (
+                            <button
+                              onClick={(e) => handleDelete(e, doc.id)}
+                              className="p-2 hover:bg-red-500/10 text-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                              title="Delete local file"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          )}
+                          <button className="p-2 hover:bg-surface-variant rounded-full text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">
+                            <MoreVertical size={18} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -257,7 +282,17 @@ export const FileExplorer = () => {
                   </div>
                 </div>
                 <div className="px-1">
-                  <p className="text-sm font-bold text-on-surface truncate">{doc.name}</p>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-bold text-on-surface truncate flex-1">{doc.name}</p>
+                    {doc.source === 'local' && (
+                      <button
+                        onClick={(e) => handleDelete(e, doc.id)}
+                        className="p-1 hover:bg-red-500/10 text-red-500 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                  </div>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-[10px] font-medium text-on-surface-variant uppercase flex items-center gap-1">
                       <Layers size={10} />

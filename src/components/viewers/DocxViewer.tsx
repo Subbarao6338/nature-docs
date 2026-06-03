@@ -20,17 +20,28 @@ export const DocxViewer = ({ doc }: { doc: DocItem }) => {
       try {
         let arrayBuffer: ArrayBuffer;
         if (typeof doc.content === 'string') {
-          // If it's a string, it might be a data URL or base64
           if (doc.content.startsWith('data:')) {
-             const response = await fetch(doc.content);
-             arrayBuffer = await response.arrayBuffer();
+            const response = await fetch(doc.content);
+            arrayBuffer = await response.arrayBuffer();
           } else {
-             // Assume it's a raw string, though DOCX shouldn't be
-             const encoder = new TextEncoder();
-             arrayBuffer = encoder.encode(doc.content).buffer;
+            // Check if it's base64 but not data URL
+            try {
+              const binaryString = window.atob(doc.content);
+              const bytes = new Uint8Array(binaryString.length);
+              for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+              }
+              arrayBuffer = bytes.buffer;
+            } catch {
+              // Not base64, treat as UTF-8 string (unlikely for docx)
+              const encoder = new TextEncoder();
+              arrayBuffer = encoder.encode(doc.content).buffer;
+            }
           }
-        } else {
+        } else if (doc.content instanceof ArrayBuffer) {
           arrayBuffer = doc.content;
+        } else {
+          throw new Error('Unsupported document content format');
         }
 
         const result = await mammoth.convertToHtml({ arrayBuffer });

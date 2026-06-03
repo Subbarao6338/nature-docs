@@ -26,6 +26,7 @@ interface DocState {
   addDocument: (doc: DocItem) => void;
   setSelectedDoc: (doc: DocItem | null) => void;
   setLoading: (loading: boolean) => void;
+  removeDocument: (docId: string) => void;
 
   // Theme actions
   setTheme: (theme: Theme) => void;
@@ -79,6 +80,11 @@ export const useDocStore = create<DocState>()(
         isLoading: loading
       }),
 
+      removeDocument: (docId) => set((state) => ({
+        documents: state.documents.filter(d => d.id !== docId),
+        selectedDoc: state.selectedDoc?.id === docId ? null : state.selectedDoc
+      })),
+
       setTheme: (theme) => set({ theme }),
       setColorScheme: (scheme) => set({ colorScheme: scheme }),
     }),
@@ -88,6 +94,8 @@ export const useDocStore = create<DocState>()(
         accounts: state.accounts,
         theme: state.theme,
         colorScheme: state.colorScheme,
+        selectedSource: state.selectedSource,
+        selectedAccount: state.selectedAccount,
       }),
     }
   )

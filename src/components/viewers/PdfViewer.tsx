@@ -12,6 +12,7 @@ export const PdfViewer = ({ doc }: { doc: DocItem }) => {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1.0);
+  const [error, setError] = useState<Error | null>(null);
   const [containerWidth, setContainerWidth] = useState<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -29,6 +30,12 @@ export const PdfViewer = ({ doc }: { doc: DocItem }) => {
 
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
     setNumPages(numPages);
+    setError(null);
+  }
+
+  function onDocumentLoadError(err: Error) {
+    console.error('PDF Load Error:', err);
+    setError(err);
   }
 
   return (
@@ -79,10 +86,17 @@ export const PdfViewer = ({ doc }: { doc: DocItem }) => {
           <Document
             file={doc.url || doc.content}
             onLoadSuccess={onDocumentLoadSuccess}
+            onLoadError={onDocumentLoadError}
             loading={
               <div className="flex flex-col items-center justify-center p-20 gap-4">
                 <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
                 <p className="text-on-surface-variant animate-pulse font-medium">Preparing document...</p>
+              </div>
+            }
+            error={
+              <div className="flex flex-col items-center justify-center p-20 gap-4 text-red-500">
+                <p className="font-bold">Failed to load PDF</p>
+                <p className="text-sm text-center max-w-xs">{error?.message || 'Unknown error occurred'}</p>
               </div>
             }
           >
