@@ -3,6 +3,7 @@
 import React from 'react';
 import { DocItem } from '@/types';
 import { Download } from 'lucide-react';
+import { downloadFile } from '@/lib/utils/download';
 
 export const HtmlViewer = ({ doc }: { doc: DocItem }) => {
   const content = typeof doc.content === 'string'
@@ -17,7 +18,11 @@ export const HtmlViewer = ({ doc }: { doc: DocItem }) => {
         <div className="flex items-center gap-2">
           <span className="px-2 py-0.5 bg-orange-500/10 text-orange-600 rounded text-[10px] font-bold uppercase">HTML</span>
         </div>
-        <button className="p-2 hover:bg-primary-container text-primary rounded-xl transition-colors">
+        <button
+          onClick={() => doc.content && downloadFile(doc.name, doc.content, doc.type)}
+          className="p-2 hover:bg-primary-container text-primary rounded-xl transition-colors"
+          title="Download HTML"
+        >
           <Download size={20} />
         </button>
       </div>

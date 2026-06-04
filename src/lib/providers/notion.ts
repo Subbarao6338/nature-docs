@@ -51,10 +51,23 @@ export class NotionProvider extends DocumentProvider {
 
       // Improved block to markdown conversion
       let markdown = '';
+
+      const processRichText = (richText: any[]) => {
+        return richText.map((t: any) => {
+          let text = t.plain_text;
+          if (t.annotations.bold) text = `**${text}**`;
+          if (t.annotations.italic) text = `*${text}*`;
+          if (t.annotations.strikethrough) text = `~~${text}~~`;
+          if (t.annotations.code) text = `\`${text}\``;
+          if (t.href) text = `[${text}](${t.href})`;
+          return text;
+        }).join('');
+      };
+
       for (const block of blocks.results as any[]) {
         const type = block.type;
         const richText = block[type]?.rich_text || [];
-        const text = richText.map((t: any) => t.plain_text).join('');
+        const text = processRichText(richText);
 
         switch (type) {
           case 'paragraph':
@@ -76,14 +89,14 @@ export class NotionProvider extends DocumentProvider {
             markdown += '1. ' + text + '\n';
             break;
           case 'code':
-            markdown += '```' + (block.code.language || '') + '\n' + text + '\n```\n\n';
+            markdown += '```' + (block.code.language || '') + '\n' + block.code.rich_text.map((t: any) => t.plain_text).join('') + '\n```\n\n';
             break;
           case 'quote':
             markdown += '> ' + text + '\n\n';
             break;
           case 'callout':
             const icon = block.callout.icon?.emoji || 'ℹ️';
-            markdown += '> ' + icon + ' ' + text + '\n\n';
+            markdown += `> ${icon} ${text}\n\n`;
             break;
           case 'divider':
             markdown += '---\n\n';
@@ -91,6 +104,18 @@ export class NotionProvider extends DocumentProvider {
           case 'to_do':
             const checked = block.to_do.checked ? '[x]' : '[ ]';
             markdown += checked + ' ' + text + '\n';
+            break;
+          case 'toggle':
+            markdown += `<details><summary>${text}</summary>\n\n(Toggle content not supported yet)\n</details>\n\n`;
+            break;
+          case 'image':
+            const imageUrl = block.image.type === 'external' ? block.image.external.url : block.image.file.url;
+            const caption = block.image.caption?.map((t: any) => t.plain_text).join('') || 'Image';
+            markdown += `![${caption}](${imageUrl})\n\n`;
+            break;
+          case 'video':
+            const videoUrl = block.video.type === 'external' ? block.video.external.url : block.video.file.url;
+            markdown += `[Video: ${videoUrl}](${videoUrl})\n\n`;
             break;
         }
       }

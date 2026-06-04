@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { DocItem } from '@/types';
 import { Download, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from 'lucide-react';
 import { Document, Page, pdfjs } from 'react-pdf';
+import { downloadFile } from '@/lib/utils/download';
 
 // Set up the worker for react-pdf
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
@@ -73,7 +74,11 @@ export const PdfViewer = ({ doc }: { doc: DocItem }) => {
           </div>
         </div>
 
-        <button className="p-2 hover:bg-primary-container text-primary rounded-xl transition-colors">
+        <button
+          onClick={() => doc.content && downloadFile(doc.name, doc.content, doc.type)}
+          className="p-2 hover:bg-primary-container text-primary rounded-xl transition-colors"
+          title="Download PDF"
+        >
           <Download size={20} />
         </button>
       </div>
