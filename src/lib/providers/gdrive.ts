@@ -22,9 +22,17 @@ export class GDriveProvider extends DocumentProvider {
         throw new Error(`GDrive API error: ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as {
+        files: Array<{
+          id: string;
+          name: string;
+          mimeType: string;
+          modifiedTime: string;
+          size?: string;
+        }>;
+      };
       const files = data.files || [];
-      return files.map((file: any) => ({
+      return files.map((file) => ({
         id: file.id,
         name: file.name,
         type: file.mimeType,
