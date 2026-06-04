@@ -1,19 +1,20 @@
 import { NextResponse } from 'next/server';
 import { google } from 'googleapis';
+import { getBaseUrl, getRedirectUri } from '@/lib/utils/url';
 
 export async function GET() {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+  const baseUrl = getBaseUrl();
 
-  if (!clientId || !clientSecret || !baseUrl) {
-    return NextResponse.redirect(`${baseUrl || ''}/?error=env_not_configured&provider=gdrive`);
+  if (!clientId || !clientSecret) {
+    return NextResponse.redirect(`${baseUrl}/?error=env_not_configured&provider=gdrive`);
   }
 
   const oauth2Client = new google.auth.OAuth2(
     clientId,
     clientSecret,
-    `${baseUrl}/api/auth/gdrive/callback`
+    getRedirectUri('/api/auth/gdrive/callback')
   );
 
   const scopes = [
