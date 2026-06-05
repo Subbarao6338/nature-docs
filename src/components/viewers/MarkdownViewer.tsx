@@ -4,6 +4,7 @@ import React from 'react';
 import { DocItem } from '@/types';
 import { Download } from 'lucide-react';
 import MarkdownIt from 'markdown-it';
+import { downloadFile } from '@/lib/utils/download';
 
 const md = new MarkdownIt();
 
@@ -22,7 +23,11 @@ export const MarkdownViewer = ({ doc }: { doc: DocItem }) => {
         <div className="flex items-center gap-2">
           <span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-[10px] font-bold uppercase">Markdown</span>
         </div>
-        <button className="p-2 hover:bg-primary-container text-primary rounded-xl transition-colors">
+        <button
+          onClick={() => doc.content && downloadFile(doc.name, doc.content, doc.type)}
+          className="p-2 hover:bg-primary-container text-primary rounded-xl transition-colors"
+          title="Download Markdown"
+        >
           <Download size={20} />
         </button>
       </div>

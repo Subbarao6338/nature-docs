@@ -21,6 +21,7 @@ import { motion } from 'framer-motion';
 import { storage } from '@/lib/storage';
 import { DocItem } from '@/types';
 import { Trash2 } from 'lucide-react';
+import { formatBytes } from '@/lib/utils/format';
 
 export const FileExplorer = () => {
   const { documents, setSelectedDoc, isLoading, selectedSource, addDocument, setDocuments, removeDocument } = useDocStore();
@@ -204,6 +205,7 @@ export const FileExplorer = () => {
                 <thead>
                   <tr className="border-b border-outline/10 bg-surface-variant/10">
                     <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-on-surface-variant">Name</th>
+                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-on-surface-variant hidden md:table-cell">Size</th>
                     <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-on-surface-variant hidden md:table-cell">Updated</th>
                     <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-on-surface-variant hidden sm:table-cell">Source</th>
                     <th className="px-6 py-4 w-10"></th>
@@ -224,10 +226,13 @@ export const FileExplorer = () => {
                           <div>
                             <p className="font-semibold text-on-surface truncate max-w-[150px] md:max-w-md">{doc.name}</p>
                             <p className="text-xs text-on-surface-variant md:hidden">
-                              {new Date(doc.updatedAt).toLocaleDateString()} • {doc.source}
+                              {doc.size ? formatBytes(doc.size) : 'Unknown size'} • {new Date(doc.updatedAt).toLocaleDateString()} • {doc.source}
                             </p>
                           </div>
                         </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-on-surface-variant hidden md:table-cell">
+                        {doc.size ? formatBytes(doc.size) : '--'}
                       </td>
                       <td className="px-6 py-4 text-sm text-on-surface-variant hidden md:table-cell">
                         <div className="flex items-center gap-2">
@@ -293,11 +298,16 @@ export const FileExplorer = () => {
                       </button>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 mt-1">
+                  <div className="flex items-center justify-between gap-2 mt-1">
                     <span className="text-[10px] font-medium text-on-surface-variant uppercase flex items-center gap-1">
                       <Layers size={10} />
                       {doc.source}
                     </span>
+                    {doc.size && (
+                      <span className="text-[10px] font-medium text-on-surface-variant">
+                        {formatBytes(doc.size)}
+                      </span>
+                    )}
                   </div>
                 </div>
               </motion.div>

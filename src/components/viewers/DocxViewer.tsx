@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { DocItem } from '@/types';
 import { Download } from 'lucide-react';
 import mammoth from 'mammoth';
+import { downloadFile } from '@/lib/utils/download';
 
 export const DocxViewer = ({ doc }: { doc: DocItem }) => {
   const [htmlContent, setHtmlContent] = useState<string>('');
@@ -63,7 +64,11 @@ export const DocxViewer = ({ doc }: { doc: DocItem }) => {
         <div className="flex items-center gap-2">
           <span className="px-2 py-0.5 bg-blue-500/10 text-blue-600 rounded text-[10px] font-bold uppercase">Word</span>
         </div>
-        <button className="p-2 hover:bg-primary-container text-primary rounded-xl transition-colors">
+        <button
+          onClick={() => doc.content && downloadFile(doc.name, doc.content, doc.type)}
+          className="p-2 hover:bg-primary-container text-primary rounded-xl transition-colors"
+          title="Download Word Document"
+        >
           <Download size={20} />
         </button>
       </div>
