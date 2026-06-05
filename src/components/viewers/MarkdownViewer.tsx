@@ -4,6 +4,7 @@ import React from 'react';
 import { DocItem } from '@/types';
 import { Download } from 'lucide-react';
 import MarkdownIt from 'markdown-it';
+import DOMPurify from 'dompurify';
 import { downloadFile } from '@/lib/utils/download';
 
 const md = new MarkdownIt();
@@ -16,6 +17,7 @@ export const MarkdownViewer = ({ doc }: { doc: DocItem }) => {
       : '# No content available';
 
   const htmlContent = md.render(content);
+  const sanitizedHtml = typeof window !== 'undefined' ? DOMPurify.sanitize(htmlContent) : htmlContent;
 
   return (
     <div className="flex flex-col h-full bg-surface">
@@ -35,7 +37,7 @@ export const MarkdownViewer = ({ doc }: { doc: DocItem }) => {
       <div className="flex-1 overflow-y-auto p-6 md:p-12">
         <article
           className="prose dark:prose-invert max-w-3xl mx-auto prose-headings:text-primary prose-a:text-primary prose-img:rounded-2xl"
-          dangerouslySetInnerHTML={{ __html: htmlContent }}
+          dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
         />
       </div>
     </div>

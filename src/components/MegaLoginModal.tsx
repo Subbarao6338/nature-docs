@@ -1,34 +1,51 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Lock, Mail } from 'lucide-react';
+import { X, Lock, Mail, AlertCircle } from 'lucide-react';
 import { useDocStore } from '@/store/useDocStore';
+import { Storage } from 'megajs';
 
 export const MegaLoginModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
   const { addAccount, setSelectedAccount } = useDocStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
 
-    const newAccount = {
-      id: Math.random().toString(36).substring(7),
-      name: email,
-      source: 'mega' as const,
-      connected: true,
-      email,
-      password
-    };
+    try {
+      // Validate credentials by attempting to initialize storage
+      await new Promise((resolve, reject) => {
+        new Storage({ email, password }, (err) => {
+          if (err) return reject(err);
+          resolve(true);
+        });
+      });
 
-    addAccount(newAccount);
-    setSelectedAccount(newAccount.id);
-    setIsLoading(false);
-    onClose();
+      const newAccount = {
+        id: Math.random().toString(36).substring(7),
+        name: email,
+        source: 'mega' as const,
+        connected: true,
+        email,
+        password
+      };
+
+      addAccount(newAccount);
+      setSelectedAccount(newAccount.id);
+      onClose();
+    } catch (err: any) {
+      console.error('Mega login error:', err);
+      setError(err.message || 'Failed to connect to Mega. Please check your credentials.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -42,6 +59,12 @@ export const MegaLoginModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: 
         </header>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {error && (
+            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-start gap-3 text-red-500 text-sm">
+              <AlertCircle size={18} className="shrink-0 mt-0.5" />
+              <p>{error}</p>
+            </div>
+          )}
           <div className="space-y-4">
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" size={18} />
