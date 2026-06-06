@@ -27,7 +27,6 @@ import { formatBytes } from '@/lib/utils/format';
 export const FileExplorer = () => {
   const { documents, setSelectedDoc, isLoading, selectedSource, addDocument, setDocuments, removeDocument, triggerRefresh } = useDocStore();
   const [searchQuery, setSearchQuery] = useState('');
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState<'name' | 'date'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -138,13 +137,11 @@ export const FileExplorer = () => {
               {selectedSource !== 'local' && (
                 <button
                   onClick={() => {
-                    setIsRefreshing(true);
                     triggerRefresh();
-                    setTimeout(() => setIsRefreshing(false), 1000);
                   }}
                   className={clsx(
                     "p-2 rounded-lg transition-all text-on-surface-variant hover:text-on-surface hover:bg-surface",
-                    isRefreshing && "animate-spin text-primary"
+                    isLoading && "animate-spin text-primary"
                   )}
                   title="Refresh documents"
                 >

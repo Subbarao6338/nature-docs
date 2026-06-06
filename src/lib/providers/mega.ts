@@ -1,6 +1,6 @@
 import { DocItem, Account } from '@/types';
 import { DocumentProvider } from './base';
-import { Storage, File } from 'megajs';
+import { Storage, File, MutableFile } from 'megajs';
 
 export class MegaProvider extends DocumentProvider {
   private async getStorage(account: Account): Promise<Storage> {
@@ -24,15 +24,15 @@ export class MegaProvider extends DocumentProvider {
       const storage = await this.getStorage(account);
 
       const files: DocItem[] = [];
-      const traverse = (node: any) => {
+      const traverse = (node: MutableFile) => {
         if (node.children) {
           node.children.forEach(traverse);
         } else {
-          const mimeType = this.getMimeType(node.name);
+          const mimeType = this.getMimeType(node.name || '');
           if (mimeType) {
             files.push({
-              id: node.handle,
-              name: node.name,
+              id: (node as any).handle || node.nodeId || '',
+              name: node.name || 'Untitled',
               type: mimeType,
               updatedAt: new Date().toISOString(),
               size: node.size,
@@ -43,7 +43,9 @@ export class MegaProvider extends DocumentProvider {
         }
       };
 
-      traverse(storage.root);
+      if (storage.root) {
+        traverse(storage.root);
+      }
       return files;
     } catch (error) {
       console.error('Mega listDocuments error:', error);
