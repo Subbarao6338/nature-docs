@@ -30,7 +30,8 @@ export default function Home() {
     setSelectedDoc,
     setSelectedAccount,
     theme,
-    colorScheme
+    colorScheme,
+    refreshTrigger
   } = useDocStore();
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -131,7 +132,7 @@ export default function Home() {
     };
 
     fetchDocs();
-  }, [selectedSource, selectedAccount, accounts, setDocuments, setLoading]);
+  }, [selectedSource, selectedAccount, accounts, setDocuments, setLoading, refreshTrigger]);
 
   // Fetch content when a document is selected
   useEffect(() => {

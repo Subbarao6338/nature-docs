@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { DocItem } from '@/types';
 import { Download } from 'lucide-react';
 import mammoth from 'mammoth';
+import DOMPurify from 'dompurify';
 import { downloadFile } from '@/lib/utils/download';
 
 export const DocxViewer = ({ doc }: { doc: DocItem }) => {
@@ -46,7 +47,8 @@ export const DocxViewer = ({ doc }: { doc: DocItem }) => {
         }
 
         const result = await mammoth.convertToHtml({ arrayBuffer });
-        setHtmlContent(result.value);
+        const sanitized = DOMPurify.sanitize(result.value);
+        setHtmlContent(sanitized);
       } catch (err) {
         console.error('Error converting DOCX:', err);
         setError('Failed to convert DOCX to HTML');

@@ -13,7 +13,8 @@ import {
   Layers,
   ArrowUpDown,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  RefreshCw
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useDropzone } from 'react-dropzone';
@@ -24,8 +25,9 @@ import { Trash2 } from 'lucide-react';
 import { formatBytes } from '@/lib/utils/format';
 
 export const FileExplorer = () => {
-  const { documents, setSelectedDoc, isLoading, selectedSource, addDocument, setDocuments, removeDocument } = useDocStore();
+  const { documents, setSelectedDoc, isLoading, selectedSource, addDocument, setDocuments, removeDocument, triggerRefresh } = useDocStore();
   const [searchQuery, setSearchQuery] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState<'name' | 'date'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -133,6 +135,22 @@ export const FileExplorer = () => {
             </div>
 
             <div className="flex items-center bg-surface-variant/20 p-1 rounded-xl">
+              {selectedSource !== 'local' && (
+                <button
+                  onClick={() => {
+                    setIsRefreshing(true);
+                    triggerRefresh();
+                    setTimeout(() => setIsRefreshing(false), 1000);
+                  }}
+                  className={clsx(
+                    "p-2 rounded-lg transition-all text-on-surface-variant hover:text-on-surface hover:bg-surface",
+                    isRefreshing && "animate-spin text-primary"
+                  )}
+                  title="Refresh documents"
+                >
+                  <RefreshCw size={20} />
+                </button>
+              )}
               <button
                 onClick={() => setViewMode('grid')}
               className={clsx(

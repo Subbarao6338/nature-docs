@@ -12,6 +12,7 @@ interface DocState {
   documents: DocItem[];
   selectedDoc: DocItem | null;
   isLoading: boolean;
+  refreshTrigger: number;
 
   // Theme state
   theme: Theme;
@@ -27,6 +28,7 @@ interface DocState {
   setSelectedDoc: (doc: DocItem | null) => void;
   setLoading: (loading: boolean) => void;
   removeDocument: (docId: string) => void;
+  triggerRefresh: () => void;
 
   // Theme actions
   setTheme: (theme: Theme) => void;
@@ -42,6 +44,7 @@ export const useDocStore = create<DocState>()(
       documents: [],
       selectedDoc: null,
       isLoading: false,
+      refreshTrigger: 0,
 
       theme: 'system',
       colorScheme: 'blue',
@@ -54,14 +57,23 @@ export const useDocStore = create<DocState>()(
         accounts: state.accounts.filter(a => a.id !== accountId)
       })),
 
-      setSelectedSource: (source) => set({
+      setSelectedSource: (source) => set((state) => ({
         selectedSource: source,
         selectedAccount: null,
-        documents: []
-      }),
+        documents: [],
+        selectedDoc: state.selectedDoc?.source === source ? state.selectedDoc : null
+      })),
 
-      setSelectedAccount: (accountId) => set({
-        selectedAccount: accountId
+      setSelectedAccount: (accountId) => set((state) => {
+        const account = state.accounts.find(a => a.id === accountId);
+        const shouldClearDoc = state.selectedDoc &&
+          state.selectedDoc.source !== 'local' &&
+          state.selectedDoc.accountId !== accountId;
+
+        return {
+          selectedAccount: accountId,
+          selectedDoc: shouldClearDoc ? null : state.selectedDoc
+        };
       }),
 
       setDocuments: (docs) => set({
@@ -83,6 +95,10 @@ export const useDocStore = create<DocState>()(
       removeDocument: (docId) => set((state) => ({
         documents: state.documents.filter(d => d.id !== docId),
         selectedDoc: state.selectedDoc?.id === docId ? null : state.selectedDoc
+      })),
+
+      triggerRefresh: () => set((state) => ({
+        refreshTrigger: state.refreshTrigger + 1
       })),
 
       setTheme: (theme) => set({ theme }),

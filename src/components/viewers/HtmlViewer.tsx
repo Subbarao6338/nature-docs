@@ -3,6 +3,7 @@
 import React from 'react';
 import { DocItem } from '@/types';
 import { Download } from 'lucide-react';
+import DOMPurify from 'dompurify';
 import { downloadFile } from '@/lib/utils/download';
 
 export const HtmlViewer = ({ doc }: { doc: DocItem }) => {
@@ -11,6 +12,8 @@ export const HtmlViewer = ({ doc }: { doc: DocItem }) => {
     : doc.content instanceof ArrayBuffer
       ? new TextDecoder().decode(doc.content)
       : '<html><body>No content available</body></html>';
+
+  const sanitizedHtml = typeof window !== 'undefined' ? DOMPurify.sanitize(content, { WHOLE_DOCUMENT: true }) : content;
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -29,7 +32,7 @@ export const HtmlViewer = ({ doc }: { doc: DocItem }) => {
 
       <div className="flex-1 bg-white">
         <iframe
-          srcDoc={content}
+          srcDoc={sanitizedHtml}
           className="w-full h-full border-none"
           title={doc.name}
         />
