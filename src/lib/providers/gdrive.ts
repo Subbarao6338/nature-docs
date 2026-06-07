@@ -9,7 +9,7 @@ export class GDriveProvider extends DocumentProvider {
       // Use standard fetch instead of googleapis library in client-side code
       const response = await fetch(
         `https://www.googleapis.com/drive/v3/files?pageSize=50&fields=files(id,name,mimeType,modifiedTime,size)&q=${encodeURIComponent(
-          "mimeType = 'application/pdf' or mimeType = 'text/markdown' or mimeType = 'text/plain' or mimeType = 'text/html' or mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'"
+          "(mimeType = 'application/pdf' or mimeType = 'text/markdown' or mimeType = 'text/plain' or mimeType = 'text/html' or mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') and trashed = false"
         )}`,
         {
           headers: {

@@ -19,8 +19,14 @@ export async function GET(request: Request) {
 
   try {
     const { tokens } = await oauth2Client.getToken(code);
+    oauth2Client.setCredentials(tokens);
 
-    const response = NextResponse.redirect(`${baseUrl}?source=gdrive`);
+    // Fetch user info to get email
+    const drive = google.drive({ version: 'v3', auth: oauth2Client });
+    const about = await drive.about.get({ fields: 'user(emailAddress)' });
+    const email = about.data.user?.emailAddress || 'Google Drive';
+
+    const response = NextResponse.redirect(`${baseUrl}?source=gdrive&email=${encodeURIComponent(email)}`);
 
     // Securely store tokens in cookies
     response.cookies.set('gdrive_access_token', tokens.access_token || '', {

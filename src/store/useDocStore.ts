@@ -49,9 +49,15 @@ export const useDocStore = create<DocState>()(
       theme: 'system',
       colorScheme: 'blue',
 
-      addAccount: (account) => set((state) => ({
-        accounts: [...state.accounts, account]
-      })),
+      addAccount: (account) => set((state) => {
+        const existingIndex = state.accounts.findIndex(a => a.id === account.id);
+        if (existingIndex > -1) {
+          const newAccounts = [...state.accounts];
+          newAccounts[existingIndex] = account;
+          return { accounts: newAccounts };
+        }
+        return { accounts: [...state.accounts, account] };
+      }),
 
       removeAccount: (accountId) => set((state) => ({
         accounts: state.accounts.filter(a => a.id !== accountId)

@@ -79,17 +79,21 @@ export default function Home() {
           const res = await fetch(`/api/auth/token?source=${source}`);
           if (res.ok) {
             const { accessToken } = await res.json();
-            const id = Math.random().toString(36).substring(7);
-            const name = url.searchParams.get('workspaceName') || (source === 'gdrive' ? 'Google Drive' : 'Notion');
+            const email = url.searchParams.get('email');
+            const workspaceName = url.searchParams.get('workspaceName');
+            const workspaceId = url.searchParams.get('workspaceId');
+
+            const accountId = workspaceId || email || Math.random().toString(36).substring(7);
+            const name = workspaceName || email || (source === 'gdrive' ? 'Google Drive' : 'Notion');
 
             addAccount({
-              id,
+              id: accountId,
               name,
               source: source as any,
               connected: true,
               accessToken
             });
-            setSelectedAccount(id);
+            setSelectedAccount(accountId);
           }
         } catch (error) {
           console.error('Failed to fetch token from cookie:', error);
