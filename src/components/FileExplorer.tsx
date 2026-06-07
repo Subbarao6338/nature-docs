@@ -139,13 +139,19 @@ export const FileExplorer = () => {
                   onClick={() => {
                     triggerRefresh();
                   }}
+                  disabled={isLoading}
                   className={clsx(
-                    "p-2 rounded-lg transition-all text-on-surface-variant hover:text-on-surface hover:bg-surface",
-                    isLoading && "animate-spin text-primary"
+                    "p-2 rounded-lg transition-all text-on-surface-variant hover:text-on-surface hover:bg-surface disabled:opacity-50",
+                    isLoading && "text-primary"
                   )}
                   title="Refresh documents"
                 >
-                  <RefreshCw size={20} />
+                  <motion.div
+                    animate={isLoading ? { rotate: 360 } : { rotate: 0 }}
+                    transition={isLoading ? { repeat: Infinity, duration: 1, ease: "linear" } : { duration: 0.2 }}
+                  >
+                    <RefreshCw size={20} />
+                  </motion.div>
                 </button>
               )}
               <button

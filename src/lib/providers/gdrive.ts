@@ -1,6 +1,18 @@
 import { DocItem, Account } from '@/types';
 import { DocumentProvider } from './base';
 
+interface GDriveFile {
+  id: string;
+  name: string;
+  mimeType: string;
+  modifiedTime: string;
+  size?: string;
+}
+
+interface GDriveListResponse {
+  files: GDriveFile[];
+}
+
 export class GDriveProvider extends DocumentProvider {
   async listDocuments(account: Account): Promise<DocItem[]> {
     if (!account.accessToken) return [];
@@ -8,7 +20,7 @@ export class GDriveProvider extends DocumentProvider {
     try {
       // Use standard fetch instead of googleapis library in client-side code
       const response = await fetch(
-        `https://www.googleapis.com/drive/v3/files?pageSize=50&fields=files(id,name,mimeType,modifiedTime,size)&q=${encodeURIComponent(
+        `https://www.googleapis.com/drive/v3/files?pageSize=100&fields=files(id,name,mimeType,modifiedTime,size)&q=${encodeURIComponent(
           "(mimeType = 'application/pdf' or mimeType = 'text/markdown' or mimeType = 'text/plain' or mimeType = 'text/html' or mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') and trashed = false"
         )}`,
         {
@@ -22,15 +34,7 @@ export class GDriveProvider extends DocumentProvider {
         throw new Error(`GDrive API error: ${response.statusText}`);
       }
 
-      const data = (await response.json()) as {
-        files: Array<{
-          id: string;
-          name: string;
-          mimeType: string;
-          modifiedTime: string;
-          size?: string;
-        }>;
-      };
+      const data = (await response.json()) as GDriveListResponse;
       const files = data.files || [];
       return files.map((file) => ({
         id: file.id,

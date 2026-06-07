@@ -6,35 +6,39 @@ import { Sidebar } from '@/components/Sidebar';
 import { FileExplorer } from '@/components/FileExplorer';
 import { Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ExternalLink } from 'lucide-react';
 
 const PdfViewer = dynamic(() => import('@/components/viewers/PdfViewer').then(mod => mod.PdfViewer), { ssr: false });
 const MarkdownViewer = dynamic(() => import('@/components/viewers/MarkdownViewer').then(mod => mod.MarkdownViewer), { ssr: false });
 const DocxViewer = dynamic(() => import('@/components/viewers/DocxViewer').then(mod => mod.DocxViewer), { ssr: false });
 import { HtmlViewer } from '@/components/viewers/HtmlViewer';
 import { useDocStore } from '@/store/useDocStore';
-import { GDriveProvider } from '@/lib/providers/gdrive';
-import { NotionProvider } from '@/lib/providers/notion';
-import { MegaProvider } from '@/lib/providers/mega';
-import { LocalProvider } from '@/lib/providers/local';
+import { useAuthHandler } from '@/hooks/useAuthHandler';
+import { useDocumentFetcher } from '@/hooks/useDocumentFetcher';
+import { Toast, ToastType } from '@/components/Toast';
 
 export default function Home() {
   const {
     selectedDoc,
-    selectedSource,
-    selectedAccount,
-    accounts,
-    setDocuments,
-    setLoading,
-    addAccount,
-    documents,
     setSelectedDoc,
-    setSelectedAccount,
     theme,
     colorScheme,
-    refreshTrigger
   } = useDocStore();
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: ToastType; isVisible: boolean }>({
+    message: '',
+    type: 'info',
+    isVisible: false
+  });
+
+  const showToast = (message: string, type: ToastType) => {
+    setToast({ message, type, isVisible: true });
+  };
+
+  // Custom hooks for auth and document fetching
+  useAuthHandler(showToast);
+  useDocumentFetcher();
 
   // Apply theme attributes to document element
   useEffect(() => {
@@ -59,125 +63,34 @@ export default function Home() {
     }
   }, [theme, colorScheme]);
 
-  // Handle OAuth callbacks and errors
-  useEffect(() => {
-    const fetchToken = async () => {
-      const url = new URL(window.location.href);
-      const source = url.searchParams.get('source');
-      const error = url.searchParams.get('error');
-
-      if (error === 'env_not_configured') {
-        const provider = url.searchParams.get('provider');
-        const providerName = provider === 'gdrive' ? 'Google Drive' : provider === 'notion' ? 'Notion' : 'the provider';
-        alert(`Configuration Error: ${providerName} is not properly configured. Please check your environment variables (CLIENT_ID, etc.).`);
-        window.history.replaceState({}, document.title, "/");
-        return;
-      }
-
-      if (source && (source === 'gdrive' || source === 'notion')) {
-        try {
-          const res = await fetch(`/api/auth/token?source=${source}`);
-          if (res.ok) {
-            const { accessToken } = await res.json();
-            const email = url.searchParams.get('email');
-            const workspaceName = url.searchParams.get('workspaceName');
-            const workspaceId = url.searchParams.get('workspaceId');
-
-            const accountId = workspaceId || email || Math.random().toString(36).substring(7);
-            const name = workspaceName || email || (source === 'gdrive' ? 'Google Drive' : 'Notion');
-
-            addAccount({
-              id: accountId,
-              name,
-              source: source as any,
-              connected: true,
-              accessToken
-            });
-            setSelectedAccount(accountId);
-          }
-        } catch (error) {
-          console.error('Failed to fetch token from cookie:', error);
-        } finally {
-          // Clean up URL
-          window.history.replaceState({}, document.title, "/");
-        }
-      }
-    };
-
-    fetchToken();
-  }, [addAccount, setSelectedAccount]);
-
-  useEffect(() => {
-    const fetchDocs = async () => {
-      setLoading(true);
-      try {
-        let provider;
-        switch (selectedSource) {
-          case 'gdrive': provider = new GDriveProvider(); break;
-          case 'notion': provider = new NotionProvider(); break;
-          case 'mega': provider = new MegaProvider(); break;
-          case 'local': provider = new LocalProvider(); break;
-        }
-
-        if (provider) {
-          const account = accounts.find(a => a.id === selectedAccount) || accounts.find(a => a.source === selectedSource);
-          if (account || selectedSource === 'local') {
-            const docs = await provider.listDocuments(account || { id: 'local', name: 'Local', source: 'local', connected: true });
-            setDocuments(docs);
-          } else {
-            setDocuments([]);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch docs:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDocs();
-  }, [selectedSource, selectedAccount, accounts, setDocuments, setLoading, refreshTrigger]);
-
-  // Fetch content when a document is selected
-  useEffect(() => {
-    const fetchContent = async () => {
-      if (!selectedDoc || selectedDoc.content) return;
-
-      try {
-        let provider;
-        switch (selectedDoc.source) {
-          case 'gdrive': provider = new GDriveProvider(); break;
-          case 'notion': provider = new NotionProvider(); break;
-          case 'mega': provider = new MegaProvider(); break;
-          case 'local': provider = new LocalProvider(); break;
-        }
-
-        if (provider) {
-          const account = accounts.find(a => a.id === selectedDoc.accountId);
-          const content = await provider.getDocumentContent(selectedDoc, account || { id: 'local', name: 'Local', source: 'local', connected: true });
-
-          // Update the document in the list with its content
-          const updatedDocs = documents.map(d =>
-            d.id === selectedDoc.id ? { ...d, content } : d
-          );
-          setDocuments(updatedDocs);
-          setSelectedDoc({ ...selectedDoc, content });
-        }
-      } catch (error) {
-        console.error('Failed to fetch document content:', error);
-      }
-    };
-
-    fetchContent();
-  }, [selectedDoc, accounts, documents, setDocuments, setSelectedDoc]);
-
   const renderViewer = () => {
     if (!selectedDoc) return null;
+
+    const getSourceUrl = () => {
+      if (selectedDoc.source === 'gdrive') return `https://drive.google.com/file/d/${selectedDoc.id}/view`;
+      if (selectedDoc.source === 'notion') return `https://notion.so/${selectedDoc.id.replace(/-/g, '')}`;
+      return null;
+    };
+
+    const sourceUrl = getSourceUrl();
 
     return (
       <div className="fixed inset-0 z-50 bg-surface flex flex-col md:relative md:inset-auto md:flex-1 h-full">
         <div className="flex items-center justify-between p-4 border-b border-outline/20">
-          <h2 className="text-lg font-medium truncate pr-8">{selectedDoc.name}</h2>
+          <div className="flex items-center gap-3 flex-1 min-w-0 pr-4">
+            <h2 className="text-lg font-medium truncate">{selectedDoc.name}</h2>
+            {sourceUrl && (
+              <a
+                href={sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-1.5 text-primary hover:bg-primary-container rounded-lg transition-colors shrink-0"
+                title="Open in Source"
+              >
+                <ExternalLink size={18} />
+              </a>
+            )}
+          </div>
           <button
             onClick={() => setSelectedDoc(null)}
             className="p-2 hover:bg-surface-variant rounded-full"
@@ -239,6 +152,13 @@ export default function Home() {
       </div>
 
       {selectedDoc && renderViewer()}
+
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
+      />
     </div>
   );
 }
