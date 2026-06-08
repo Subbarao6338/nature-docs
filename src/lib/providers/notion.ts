@@ -1,7 +1,7 @@
 import { DocItem, Account } from '@/types';
 import { DocumentProvider } from './base';
 import { Client } from '@notionhq/client';
-import { ListBlockChildrenResponse } from '@notionhq/client/build/src/api-endpoints';
+import { ListBlockChildrenResponse, SearchResponse, PageObjectResponse } from '@notionhq/client/build/src/api-endpoints';
 
 type NotionBlock = ListBlockChildrenResponse['results'][number] & {
   type: string;
@@ -20,23 +20,24 @@ export class NotionProvider extends DocumentProvider {
       const response = await notion.search({
         filter: { property: 'object', value: 'page' },
         sort: { direction: 'descending', timestamp: 'last_edited_time' }
-      });
+      }) as SearchResponse;
 
-      return response.results.map((page: any) => {
-        const properties = (page as any).properties;
+      return response.results.map((page) => {
+        const p = page as any;
+        const properties = p.properties;
         let title = 'Untitled';
 
         // Notion title can be in different properties depending on the page setup
         const titleProp = properties?.title || properties?.Name || properties?.Page;
-        if (titleProp?.title?.[0]?.plain_text) {
+        if (titleProp?.type === 'title' && titleProp.title?.[0]?.plain_text) {
           title = titleProp.title[0].plain_text;
         }
 
         return {
-          id: page.id,
+          id: p.id,
           name: title,
           type: 'text/markdown',
-          updatedAt: page.last_edited_time,
+          updatedAt: p.last_edited_time || new Date().toISOString(),
           source: 'notion',
           accountId: account.id
         };

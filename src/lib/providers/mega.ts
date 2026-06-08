@@ -34,7 +34,7 @@ export class MegaProvider extends DocumentProvider {
               id: (node as any).handle || node.nodeId || '',
               name: node.name || 'Untitled',
               type: mimeType,
-              updatedAt: new Date().toISOString(),
+              updatedAt: (node as any).mtime ? new Date((node as any).mtime * 1000).toISOString() : new Date().toISOString(),
               size: node.size,
               source: 'mega',
               accountId: account.id
