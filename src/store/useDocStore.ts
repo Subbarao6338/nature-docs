@@ -25,6 +25,7 @@ interface DocState {
   setSelectedAccount: (accountId: string | null) => void;
   setDocuments: (docs: DocItem[]) => void;
   addDocument: (doc: DocItem) => void;
+  updateDocument: (docId: string, updates: Partial<DocItem>) => void;
   setSelectedDoc: (doc: DocItem | null) => void;
   setLoading: (loading: boolean) => void;
   removeDocument: (docId: string) => void;
@@ -89,6 +90,15 @@ export const useDocStore = create<DocState>()(
       addDocument: (doc) => set((state) => ({
         documents: [...state.documents, doc]
       })),
+
+      updateDocument: (docId, updates) => set((state) => {
+        const newDocs = state.documents.map(d => d.id === docId ? { ...d, ...updates } : d);
+        const shouldUpdateSelected = state.selectedDoc?.id === docId;
+        return {
+          documents: newDocs,
+          selectedDoc: shouldUpdateSelected ? { ...state.selectedDoc!, ...updates } : state.selectedDoc
+        };
+      }),
 
       setSelectedDoc: (doc) => set({
         selectedDoc: doc

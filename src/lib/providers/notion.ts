@@ -23,7 +23,8 @@ export class NotionProvider extends DocumentProvider {
       }) as SearchResponse;
 
       return response.results.map((page) => {
-        const p = page as any;
+        if (page.object !== 'page') return null;
+        const p = page as PageObjectResponse;
         const properties = p.properties;
         let title = 'Untitled';
 
@@ -40,8 +41,8 @@ export class NotionProvider extends DocumentProvider {
           updatedAt: p.last_edited_time || new Date().toISOString(),
           source: 'notion',
           accountId: account.id
-        };
-      });
+        } as DocItem;
+      }).filter((doc): doc is DocItem => doc !== null);
     } catch (error) {
       console.error('Notion fetch error:', error);
       return [];

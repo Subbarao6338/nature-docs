@@ -11,7 +11,7 @@ import { ExternalLink } from 'lucide-react';
 const PdfViewer = dynamic(() => import('@/components/viewers/PdfViewer').then(mod => mod.PdfViewer), { ssr: false });
 const MarkdownViewer = dynamic(() => import('@/components/viewers/MarkdownViewer').then(mod => mod.MarkdownViewer), { ssr: false });
 const DocxViewer = dynamic(() => import('@/components/viewers/DocxViewer').then(mod => mod.DocxViewer), { ssr: false });
-import { HtmlViewer } from '@/components/viewers/HtmlViewer';
+const HtmlViewer = dynamic(() => import('@/components/viewers/HtmlViewer').then(mod => mod.HtmlViewer), { ssr: false });
 import { useDocStore } from '@/store/useDocStore';
 import { useAuthHandler } from '@/hooks/useAuthHandler';
 import { useDocumentFetcher } from '@/hooks/useDocumentFetcher';
@@ -38,7 +38,7 @@ export default function Home() {
 
   // Custom hooks for auth and document fetching
   useAuthHandler(showToast);
-  useDocumentFetcher();
+  useDocumentFetcher(showToast);
 
   // Apply theme attributes to document element
   useEffect(() => {
