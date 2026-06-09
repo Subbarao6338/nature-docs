@@ -3,10 +3,17 @@ import { DocumentProvider } from './base';
 import { Storage, File, MutableFile } from 'megajs';
 
 export class MegaProvider extends DocumentProvider {
+  private storageCache: Map<string, Storage> = new Map();
+
   private async getStorage(account: Account): Promise<Storage> {
     const { email, password } = account;
 
     if (!email || !password) throw new Error('Mega credentials missing');
+
+    const cacheKey = email;
+    if (this.storageCache.has(cacheKey)) {
+      return this.storageCache.get(cacheKey)!;
+    }
 
     return new Promise((resolve, reject) => {
       const storage = new Storage({
@@ -14,6 +21,7 @@ export class MegaProvider extends DocumentProvider {
         password,
       }, (err) => {
         if (err) return reject(err);
+        this.storageCache.set(cacheKey, storage);
         resolve(storage);
       });
     });
@@ -30,8 +38,10 @@ export class MegaProvider extends DocumentProvider {
         } else {
           const mimeType = this.getMimeType(node.name || '');
           if (mimeType) {
+            // Use handle from node if available, otherwise nodeId
+            const id = (node as any).handle || node.nodeId || '';
             files.push({
-              id: (node as any).handle || node.nodeId || '',
+              id,
               name: node.name || 'Untitled',
               type: mimeType,
               updatedAt: (node as any).mtime ? new Date((node as any).mtime * 1000).toISOString() : new Date().toISOString(),

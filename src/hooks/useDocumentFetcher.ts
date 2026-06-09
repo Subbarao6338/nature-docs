@@ -1,12 +1,9 @@
 import { useEffect } from 'react';
 import { useDocStore } from '@/store/useDocStore';
-import { DocItem } from '@/types';
-import { GDriveProvider } from '@/lib/providers/gdrive';
-import { NotionProvider } from '@/lib/providers/notion';
-import { MegaProvider } from '@/lib/providers/mega';
-import { LocalProvider } from '@/lib/providers/local';
+import { providerFactory } from '@/lib/providers/factory';
+import { ToastType } from '@/components/Toast';
 
-export const useDocumentFetcher = () => {
+export const useDocumentFetcher = (showToast?: (message: string, type: ToastType) => void) => {
   const {
     selectedSource,
     selectedAccount,
@@ -15,8 +12,7 @@ export const useDocumentFetcher = () => {
     setLoading,
     refreshTrigger,
     selectedDoc,
-    setSelectedDoc,
-    documents
+    updateDocument,
   } = useDocStore();
 
   // Fetch list of documents
@@ -24,32 +20,25 @@ export const useDocumentFetcher = () => {
     const fetchDocs = async () => {
       setLoading(true);
       try {
-        let provider;
-        switch (selectedSource) {
-          case 'gdrive': provider = new GDriveProvider(); break;
-          case 'notion': provider = new NotionProvider(); break;
-          case 'mega': provider = new MegaProvider(); break;
-          case 'local': provider = new LocalProvider(); break;
-        }
+        const provider = providerFactory.getProvider(selectedSource);
+        const account = accounts.find(a => a.id === selectedAccount) || accounts.find(a => a.source === selectedSource);
 
-        if (provider) {
-          const account = accounts.find(a => a.id === selectedAccount) || accounts.find(a => a.source === selectedSource);
-          if (account || selectedSource === 'local') {
-            const docs = await provider.listDocuments(account || { id: 'local', name: 'Local', source: 'local', connected: true });
-            setDocuments(docs);
-          } else {
-            setDocuments([]);
-          }
+        if (account || selectedSource === 'local') {
+          const docs = await provider.listDocuments(account || { id: 'local', name: 'Local', source: 'local', connected: true });
+          setDocuments(docs);
+        } else {
+          setDocuments([]);
         }
       } catch (error) {
         console.error('Failed to fetch docs:', error);
+        showToast?.('Failed to fetch documents from ' + selectedSource, 'error');
       } finally {
         setLoading(false);
       }
     };
 
     fetchDocs();
-  }, [selectedSource, selectedAccount, accounts, setDocuments, setLoading, refreshTrigger]);
+  }, [selectedSource, selectedAccount, accounts, setDocuments, setLoading, refreshTrigger, showToast]);
 
   // Fetch content when a document is selected
   useEffect(() => {
@@ -57,29 +46,18 @@ export const useDocumentFetcher = () => {
       if (!selectedDoc || selectedDoc.content) return;
 
       try {
-        let provider;
-        switch (selectedDoc.source) {
-          case 'gdrive': provider = new GDriveProvider(); break;
-          case 'notion': provider = new NotionProvider(); break;
-          case 'mega': provider = new MegaProvider(); break;
-          case 'local': provider = new LocalProvider(); break;
-        }
+        const provider = providerFactory.getProvider(selectedDoc.source);
+        const account = accounts.find(a => a.id === selectedDoc.accountId);
+        const content = await provider.getDocumentContent(selectedDoc, account || { id: 'local', name: 'Local', source: 'local', connected: true });
 
-        if (provider) {
-          const account = accounts.find(a => a.id === selectedDoc.accountId);
-          const content = await provider.getDocumentContent(selectedDoc, account || { id: 'local', name: 'Local', source: 'local', connected: true });
-
-          // Update the document in the list with its content
-          setDocuments(documents.map((d: DocItem) =>
-            d.id === selectedDoc.id ? { ...d, content } : d
-          ));
-          setSelectedDoc({ ...selectedDoc, content });
-        }
+        // Update the document in the store with its content
+        updateDocument(selectedDoc.id, { content });
       } catch (error) {
         console.error('Failed to fetch document content:', error);
+        showToast?.('Failed to load document content', 'error');
       }
     };
 
     fetchContent();
-  }, [selectedDoc, accounts, setDocuments, setSelectedDoc]);
+  }, [selectedDoc, accounts, updateDocument, showToast]);
 };
