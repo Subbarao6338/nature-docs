@@ -6,6 +6,8 @@ import { Download } from 'lucide-react';
 import mammoth from 'mammoth';
 import DOMPurify from 'dompurify';
 import { downloadFile } from '@/lib/utils/download';
+import { getFileIconInfo } from '@/lib/utils/icons';
+import { clsx } from 'clsx';
 
 export const DocxViewer = ({ doc }: { doc: DocItem }) => {
   const [htmlContent, setHtmlContent] = useState<string>('');
@@ -63,8 +65,21 @@ export const DocxViewer = ({ doc }: { doc: DocItem }) => {
   return (
     <div className="flex flex-col h-full bg-surface">
       <div className="bg-surface px-6 py-2 border-b border-outline/10 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="px-2 py-0.5 bg-blue-500/10 text-blue-600 rounded text-[10px] font-bold uppercase">Word</span>
+        <div className="flex items-center gap-3">
+          {(() => {
+            const iconInfo = getFileIconInfo(doc.type, doc.name);
+            const Icon = iconInfo.icon;
+            return (
+              <>
+                <div className={clsx("p-1.5 rounded-lg", iconInfo.bgColor, iconInfo.color)}>
+                  <Icon size={16} />
+                </div>
+                <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">
+                  {iconInfo.label}
+                </span>
+              </>
+            );
+          })()}
         </div>
         <button
           onClick={() => doc.content && downloadFile(doc.name, doc.content, doc.type)}

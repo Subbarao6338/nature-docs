@@ -29,9 +29,15 @@ export const useDocumentFetcher = (showToast?: (message: string, type: ToastType
         } else {
           setDocuments([]);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Failed to fetch docs:', error);
-        showToast?.('Failed to fetch documents from ' + selectedSource, 'error');
+        let message = 'Failed to fetch documents from ' + selectedSource;
+        if (error.message?.includes('401') || error.message?.includes('403') || error.message?.includes('token')) {
+          message = `Authentication expired for ${selectedSource}. Please reconnect.`;
+        } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+          message = `Network error: Unable to reach ${selectedSource}.`;
+        }
+        showToast?.(message, 'error');
       } finally {
         setLoading(false);
       }

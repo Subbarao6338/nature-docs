@@ -5,11 +5,14 @@ import { DocItem } from '@/types';
 import { Download, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from 'lucide-react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { downloadFile } from '@/lib/utils/download';
+import { getFileIconInfo } from '@/lib/utils/icons';
+import { clsx } from 'clsx';
 
 // Set up the worker for react-pdf
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 export const PdfViewer = ({ doc }: { doc: DocItem }) => {
+  const iconInfo = getFileIconInfo(doc.type, doc.name);
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1.0);
@@ -43,6 +46,19 @@ export const PdfViewer = ({ doc }: { doc: DocItem }) => {
     <div className="flex flex-col h-full bg-surface-variant/10">
       <div className="bg-surface px-4 py-2 border-b border-outline/10 flex items-center justify-between">
         <div className="flex items-center gap-4">
+          {(() => {
+            const Icon = iconInfo.icon;
+            return (
+              <div className="hidden lg:flex items-center gap-3 pr-4 border-r border-outline/10">
+                <div className={clsx("p-1.5 rounded-lg", iconInfo.bgColor, iconInfo.color)}>
+                  <Icon size={16} />
+                </div>
+                <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">
+                  {iconInfo.label}
+                </span>
+              </div>
+            );
+          })()}
           <div className="flex items-center bg-surface-variant/30 rounded-xl p-1">
             <button
               disabled={pageNumber <= 1}
