@@ -23,6 +23,7 @@ import { storage } from '@/lib/storage';
 import { DocItem } from '@/types';
 import { Trash2 } from 'lucide-react';
 import { formatBytes } from '@/lib/utils/format';
+import { getFileIconInfo } from '@/lib/utils/icons';
 
 export const FileExplorer = () => {
   const { documents, setSelectedDoc, isLoading, selectedSource, addDocument, setDocuments, removeDocument, triggerRefresh } = useDocStore();
@@ -241,9 +242,15 @@ export const FileExplorer = () => {
                     >
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-4">
-                          <div className="p-2 bg-secondary-container text-on-secondary-container rounded-xl">
-                            <FileText size={20} />
-                          </div>
+                          {(() => {
+                            const iconInfo = getFileIconInfo(doc.type, doc.name);
+                            const Icon = iconInfo.icon;
+                            return (
+                              <div className={clsx("p-2 rounded-xl", iconInfo.bgColor, iconInfo.color)}>
+                                <Icon size={20} />
+                              </div>
+                            );
+                          })()}
                           <div>
                             <p className="font-semibold text-on-surface truncate max-w-[150px] md:max-w-md">{doc.name}</p>
                             <p className="text-xs text-on-surface-variant md:hidden">
@@ -300,13 +307,21 @@ export const FileExplorer = () => {
                 className="group relative bg-surface border border-outline/10 p-3 rounded-3xl hover:border-primary/50 hover:shadow-xl transition-all cursor-pointer"
                 onClick={() => setSelectedDoc(doc)}
               >
-                <div className="aspect-[4/5] bg-surface-variant/20 rounded-2xl mb-4 flex items-center justify-center relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <FileText size={48} className="text-primary/40 group-hover:text-primary/60 transition-colors" />
-                  <div className="absolute bottom-2 right-2 p-1.5 bg-surface/80 backdrop-blur-sm rounded-lg shadow-sm">
-                    <span className="text-[10px] font-bold uppercase text-on-surface-variant">{doc.type.split('/')[1] || doc.name.split('.').pop()}</span>
-                  </div>
-                </div>
+                {(() => {
+                  const iconInfo = getFileIconInfo(doc.type, doc.name);
+                  const Icon = iconInfo.icon;
+                  return (
+                    <div className="aspect-[4/5] bg-surface-variant/20 rounded-2xl mb-4 flex items-center justify-center relative overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className={clsx("transition-colors group-hover:opacity-80", iconInfo.color)}>
+                        <Icon size={48} />
+                      </div>
+                      <div className="absolute bottom-2 right-2 p-1.5 bg-surface/80 backdrop-blur-sm rounded-lg shadow-sm">
+                        <span className="text-[10px] font-bold uppercase text-on-surface-variant">{iconInfo.label}</span>
+                      </div>
+                    </div>
+                  );
+                })()}
                 <div className="px-1">
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm font-bold text-on-surface truncate flex-1">{doc.name}</p>
