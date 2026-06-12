@@ -2,17 +2,16 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { DocItem } from '@/types';
-import { Download, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from 'lucide-react';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { downloadFile } from '@/lib/utils/download';
-import { getFileIconInfo } from '@/lib/utils/icons';
-import { clsx } from 'clsx';
+import { useDocStore } from '@/store/useDocStore';
+import { ViewerHeader } from './ViewerHeader';
 
 // Set up the worker for react-pdf
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 export const PdfViewer = ({ doc }: { doc: DocItem }) => {
-  const iconInfo = getFileIconInfo(doc.type, doc.name);
+  const { setSelectedDoc } = useDocStore();
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1.0);
@@ -44,60 +43,37 @@ export const PdfViewer = ({ doc }: { doc: DocItem }) => {
 
   return (
     <div className="flex flex-col h-full bg-surface-variant/10">
-      <div className="bg-surface px-4 py-2 border-b border-outline/10 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          {(() => {
-            const Icon = iconInfo.icon;
-            return (
-              <div className="hidden lg:flex items-center gap-3 pr-4 border-r border-outline/10">
-                <div className={clsx("p-1.5 rounded-lg", iconInfo.bgColor, iconInfo.color)}>
-                  <Icon size={16} />
-                </div>
-                <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">
-                  {iconInfo.label}
-                </span>
-              </div>
-            );
-          })()}
-          <div className="flex items-center bg-surface-variant/30 rounded-xl p-1">
-            <button
-              disabled={pageNumber <= 1}
-              onClick={() => setPageNumber(prev => prev - 1)}
-              className="p-1.5 hover:bg-surface disabled:opacity-30 rounded-lg transition-colors"
-            >
-              <ChevronLeft size={18} />
-            </button>
-            <span className="px-3 text-sm font-medium">
-              {pageNumber} / {numPages || '--'}
-            </span>
-            <button
-              disabled={numPages ? pageNumber >= numPages : true}
-              onClick={() => setPageNumber(prev => prev + 1)}
-              className="p-1.5 hover:bg-surface disabled:opacity-30 rounded-lg transition-colors"
-            >
-              <ChevronRight size={18} />
-            </button>
-          </div>
-
-          <div className="hidden sm:flex items-center bg-surface-variant/30 rounded-xl p-1">
-            <button onClick={() => setScale(s => Math.max(0.5, s - 0.1))} className="p-1.5 hover:bg-surface rounded-lg">
-              <ZoomOut size={18} />
-            </button>
-            <span className="px-2 text-xs font-bold w-12 text-center">{Math.round(scale * 100)}%</span>
-            <button onClick={() => setScale(s => Math.min(2.0, s + 0.1))} className="p-1.5 hover:bg-surface rounded-lg">
-              <ZoomIn size={18} />
-            </button>
-          </div>
+      <ViewerHeader doc={doc} onClose={() => setSelectedDoc(null)}>
+        <div className="flex items-center bg-surface-variant/30 rounded-xl p-1">
+          <button
+            disabled={pageNumber <= 1}
+            onClick={() => setPageNumber(prev => prev - 1)}
+            className="p-1.5 hover:bg-surface disabled:opacity-30 rounded-lg transition-colors"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <span className="px-3 text-sm font-medium">
+            {pageNumber} / {numPages || '--'}
+          </span>
+          <button
+            disabled={numPages ? pageNumber >= numPages : true}
+            onClick={() => setPageNumber(prev => prev + 1)}
+            className="p-1.5 hover:bg-surface disabled:opacity-30 rounded-lg transition-colors"
+          >
+            <ChevronRight size={18} />
+          </button>
         </div>
 
-        <button
-          onClick={() => doc.content && downloadFile(doc.name, doc.content, doc.type)}
-          className="p-2 hover:bg-primary-container text-primary rounded-xl transition-colors"
-          title="Download PDF"
-        >
-          <Download size={20} />
-        </button>
-      </div>
+        <div className="flex items-center bg-surface-variant/30 rounded-xl p-1">
+          <button onClick={() => setScale(s => Math.max(0.5, s - 0.1))} className="p-1.5 hover:bg-surface rounded-lg">
+            <ZoomOut size={18} />
+          </button>
+          <span className="px-2 text-xs font-bold w-12 text-center">{Math.round(scale * 100)}%</span>
+          <button onClick={() => setScale(s => Math.min(2.0, s + 0.1))} className="p-1.5 hover:bg-surface rounded-lg">
+            <ZoomIn size={18} />
+          </button>
+        </div>
+      </ViewerHeader>
 
       <div
         ref={containerRef}

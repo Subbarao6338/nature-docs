@@ -200,7 +200,7 @@ export const FileExplorer = () => {
             <p className="text-lg font-medium text-on-surface text-center">
               {isDragActive ? "Drop to add files" : "Click or drag files to upload"}
             </p>
-            <p className="text-sm text-on-surface-variant mt-2">Support for PDF, MD, HTML, and DOCX</p>
+            <p className="text-sm text-on-surface-variant mt-2">Support for PDF, MD, TXT, HTML, and DOCX</p>
           </motion.div>
         )}
 

@@ -64,10 +64,12 @@ export class MegaProvider extends DocumentProvider {
   }
 
   private getMimeType(filename: string): string | null {
-    if (filename.endsWith('.pdf')) return 'application/pdf';
-    if (filename.endsWith('.md')) return 'text/markdown';
-    if (filename.endsWith('.html')) return 'text/html';
-    if (filename.endsWith('.docx')) return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    const name = filename.toLowerCase();
+    if (name.endsWith('.pdf')) return 'application/pdf';
+    if (name.endsWith('.md')) return 'text/markdown';
+    if (name.endsWith('.txt')) return 'text/plain';
+    if (name.endsWith('.html')) return 'text/html';
+    if (name.endsWith('.docx')) return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
     return null;
   }
 
