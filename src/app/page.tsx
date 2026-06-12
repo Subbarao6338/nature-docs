@@ -6,7 +6,6 @@ import { Sidebar } from '@/components/Sidebar';
 import { FileExplorer } from '@/components/FileExplorer';
 import { Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ExternalLink } from 'lucide-react';
 
 const PdfViewer = dynamic(() => import('@/components/viewers/PdfViewer').then(mod => mod.PdfViewer), { ssr: false });
 const MarkdownViewer = dynamic(() => import('@/components/viewers/MarkdownViewer').then(mod => mod.MarkdownViewer), { ssr: false });
@@ -16,6 +15,7 @@ import { useDocStore } from '@/store/useDocStore';
 import { useAuthHandler } from '@/hooks/useAuthHandler';
 import { useDocumentFetcher } from '@/hooks/useDocumentFetcher';
 import { Toast, ToastType } from '@/components/Toast';
+import { ViewerHeader } from '@/components/viewers/ViewerHeader';
 
 export default function Home() {
   const {
@@ -66,43 +66,33 @@ export default function Home() {
   const renderViewer = () => {
     if (!selectedDoc) return null;
 
-    const getSourceUrl = () => {
-      if (selectedDoc.source === 'gdrive') return `https://drive.google.com/file/d/${selectedDoc.id}/view`;
-      if (selectedDoc.source === 'notion') return `https://notion.so/${selectedDoc.id.replace(/-/g, '')}`;
-      return null;
-    };
+    const type = selectedDoc.type.toLowerCase();
+    const name = selectedDoc.name.toLowerCase();
+    const isPdf = type.includes('pdf');
+    const isMarkdown = type.includes('markdown') || type.includes('plain') || name.endsWith('.md') || name.endsWith('.txt');
+    const isHtml = type.includes('html') || name.endsWith('.html');
+    const isWord = type.includes('word') || name.endsWith('.docx');
 
-    const sourceUrl = getSourceUrl();
+    const hasViewer = isPdf || isMarkdown || isHtml || isWord;
 
     return (
       <div className="fixed inset-0 z-50 bg-surface flex flex-col md:relative md:inset-auto md:flex-1 h-full">
-        <div className="flex items-center justify-between p-4 border-b border-outline/20">
-          <div className="flex items-center gap-3 flex-1 min-w-0 pr-4">
-            <h2 className="text-lg font-medium truncate">{selectedDoc.name}</h2>
-            {sourceUrl && (
-              <a
-                href={sourceUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-1.5 text-primary hover:bg-primary-container rounded-lg transition-colors shrink-0"
-                title="Open in Source"
-              >
-                <ExternalLink size={18} />
-              </a>
-            )}
-          </div>
-          <button
-            onClick={() => setSelectedDoc(null)}
-            className="p-2 hover:bg-surface-variant rounded-full"
-          >
-            <X size={20} />
-          </button>
-        </div>
+        {!hasViewer && <ViewerHeader doc={selectedDoc} onClose={() => setSelectedDoc(null)} />}
         <div className="flex-1 overflow-hidden">
-          {selectedDoc.type.includes('pdf') && <PdfViewer doc={selectedDoc} />}
-          {(selectedDoc.type.includes('markdown') || selectedDoc.name.endsWith('.md')) && <MarkdownViewer doc={selectedDoc} />}
-          {(selectedDoc.type.includes('html') || selectedDoc.name.endsWith('.html')) && <HtmlViewer doc={selectedDoc} />}
-          {(selectedDoc.type.includes('word') || selectedDoc.name.endsWith('.docx')) && <DocxViewer doc={selectedDoc} />}
+          {isPdf && <PdfViewer doc={selectedDoc} />}
+          {isMarkdown && <MarkdownViewer doc={selectedDoc} />}
+          {isHtml && <HtmlViewer doc={selectedDoc} />}
+          {isWord && <DocxViewer doc={selectedDoc} />}
+
+          {!hasViewer && (
+            <div className="flex flex-col items-center justify-center h-full text-on-surface-variant p-6 text-center">
+              <div className="p-6 bg-surface-variant/20 rounded-full mb-6">
+                <X size={64} className="opacity-20" />
+              </div>
+              <h3 className="text-xl font-semibold text-on-surface">No viewer available</h3>
+              <p className="mt-2 max-w-xs">We don&apos;t support previewing this file type yet. You can still download it using the button in the header.</p>
+            </div>
+          )}
         </div>
       </div>
     );

@@ -12,7 +12,8 @@ import {
   Plus,
   Settings,
   FolderOpen,
-  ChevronRight
+  ChevronRight,
+  Trash2
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion } from 'framer-motion';
@@ -34,6 +35,7 @@ export const Sidebar = () => {
     accounts,
     selectedAccount,
     setSelectedAccount,
+    removeAccount,
   } = useDocStore();
 
   const filteredAccounts = accounts.filter(a => a.source === selectedSource);
@@ -49,6 +51,16 @@ export const Sidebar = () => {
 
     // Redirect to OAuth routes
     window.location.href = `/api/auth/${selectedSource}`;
+  };
+
+  const handleRemoveAccount = (e: React.MouseEvent, accountId: string) => {
+    e.stopPropagation();
+    if (confirm('Are you sure you want to disconnect this account?')) {
+      removeAccount(accountId);
+      if (selectedAccount === accountId) {
+        setSelectedAccount(null);
+      }
+    }
   };
 
   return (
@@ -139,10 +151,23 @@ export const Sidebar = () => {
                     account.connected ? "bg-green-400" : "bg-red-400"
                   )} />
                   <span className="flex-1 text-left font-medium truncate">{account.name}</span>
-                  <ChevronRight size={14} className={clsx(
-                    "opacity-0 group-hover:opacity-100 transition-opacity",
-                    selectedAccount === account.id ? "text-on-primary" : "text-outline"
-                  )} />
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={(e) => handleRemoveAccount(e, account.id)}
+                      className={clsx(
+                        "p-1 hover:bg-black/10 rounded transition-opacity",
+                        selectedAccount === account.id ? "text-on-primary hover:bg-white/20" : "text-on-surface-variant hover:text-red-500",
+                        "opacity-0 group-hover:opacity-100"
+                      )}
+                      title="Remove account"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                    <ChevronRight size={14} className={clsx(
+                      "opacity-0 group-hover:opacity-100 transition-opacity",
+                      selectedAccount === account.id ? "text-on-primary" : "text-outline"
+                    )} />
+                  </div>
                 </button>
               ))
             )}
