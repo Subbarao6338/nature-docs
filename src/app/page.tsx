@@ -7,15 +7,11 @@ import { FileExplorer } from '@/components/FileExplorer';
 import { Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const PdfViewer = dynamic(() => import('@/components/viewers/PdfViewer').then(mod => mod.PdfViewer), { ssr: false });
-const MarkdownViewer = dynamic(() => import('@/components/viewers/MarkdownViewer').then(mod => mod.MarkdownViewer), { ssr: false });
-const DocxViewer = dynamic(() => import('@/components/viewers/DocxViewer').then(mod => mod.DocxViewer), { ssr: false });
-const HtmlViewer = dynamic(() => import('@/components/viewers/HtmlViewer').then(mod => mod.HtmlViewer), { ssr: false });
 import { useDocStore } from '@/store/useDocStore';
 import { useAuthHandler } from '@/hooks/useAuthHandler';
 import { useDocumentFetcher } from '@/hooks/useDocumentFetcher';
 import { Toast, ToastType } from '@/components/Toast';
-import { ViewerHeader } from '@/components/viewers/ViewerHeader';
+import { DocViewerSelector } from '@/components/viewers/DocViewerSelector';
 
 export default function Home() {
   const {
@@ -63,41 +59,6 @@ export default function Home() {
     }
   }, [theme, colorScheme]);
 
-  const renderViewer = () => {
-    if (!selectedDoc) return null;
-
-    const type = selectedDoc.type.toLowerCase();
-    const name = selectedDoc.name.toLowerCase();
-    const isPdf = type.includes('pdf');
-    const isMarkdown = type.includes('markdown') || type.includes('plain') || name.endsWith('.md') || name.endsWith('.txt');
-    const isHtml = type.includes('html') || name.endsWith('.html');
-    const isWord = type.includes('word') || name.endsWith('.docx');
-
-    const hasViewer = isPdf || isMarkdown || isHtml || isWord;
-
-    return (
-      <div className="fixed inset-0 z-50 bg-surface flex flex-col md:relative md:inset-auto md:flex-1 h-full">
-        {!hasViewer && <ViewerHeader doc={selectedDoc} onClose={() => setSelectedDoc(null)} />}
-        <div className="flex-1 overflow-hidden">
-          {isPdf && <PdfViewer doc={selectedDoc} />}
-          {isMarkdown && <MarkdownViewer doc={selectedDoc} />}
-          {isHtml && <HtmlViewer doc={selectedDoc} />}
-          {isWord && <DocxViewer doc={selectedDoc} />}
-
-          {!hasViewer && (
-            <div className="flex flex-col items-center justify-center h-full text-on-surface-variant p-6 text-center">
-              <div className="p-6 bg-surface-variant/20 rounded-full mb-6">
-                <X size={64} className="opacity-20" />
-              </div>
-              <h3 className="text-xl font-semibold text-on-surface">No viewer available</h3>
-              <p className="mt-2 max-w-xs">We don&apos;t support previewing this file type yet. You can still download it using the button in the header.</p>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="flex h-screen overflow-hidden bg-surface text-on-surface">
       {/* Mobile Menu Button */}
@@ -141,7 +102,7 @@ export default function Home() {
         <FileExplorer />
       </div>
 
-      {selectedDoc && renderViewer()}
+      <DocViewerSelector />
 
       <Toast
         message={toast.message}

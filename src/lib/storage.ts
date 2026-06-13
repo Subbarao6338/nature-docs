@@ -50,5 +50,16 @@ export const storage = {
       request.onerror = () => reject(request.error);
       request.onsuccess = () => resolve();
     });
+  },
+
+  clearAllDocuments: async (): Promise<void> => {
+    const db = await getDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(STORE_NAME, 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.clear();
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => resolve();
+    });
   }
 };
