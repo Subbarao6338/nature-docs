@@ -26,7 +26,7 @@ import { formatBytes } from '@/lib/utils/format';
 import { getFileIconInfo } from '@/lib/utils/icons';
 
 export const FileExplorer = () => {
-  const { documents, setSelectedDoc, isLoading, selectedSource, addDocument, setDocuments, removeDocument, triggerRefresh } = useDocStore();
+  const { documents, setSelectedDoc, isLoading, selectedSource, addDocument, setDocuments, removeDocument, clearDocuments, triggerRefresh } = useDocStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState<'name' | 'date'>('date');
@@ -82,6 +82,13 @@ export const FileExplorer = () => {
         await storage.removeDocument(docId);
       }
       removeDocument(docId);
+    }
+  };
+
+  const handleClearAll = async () => {
+    if (confirm('Are you sure you want to delete ALL local documents? This cannot be undone.')) {
+      await storage.clearAllDocuments();
+      clearDocuments();
     }
   };
 
@@ -166,14 +173,24 @@ export const FileExplorer = () => {
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={clsx(
-                "p-2 rounded-lg transition-all",
-                viewMode === 'list' ? "bg-surface shadow-sm text-primary" : "text-on-surface-variant hover:text-on-surface"
-              )}
-            >
+                className={clsx(
+                  "p-2 rounded-lg transition-all",
+                  viewMode === 'list' ? "bg-surface shadow-sm text-primary" : "text-on-surface-variant hover:text-on-surface"
+                )}
+              >
                 <ListIcon size={20} />
               </button>
             </div>
+
+            {selectedSource === 'local' && documents.length > 0 && (
+              <button
+                onClick={handleClearAll}
+                className="p-3 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all"
+                title="Clear all local documents"
+              >
+                <Trash2 size={20} />
+              </button>
+            )}
           </div>
         </div>
       </header>

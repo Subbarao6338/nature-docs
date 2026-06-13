@@ -32,12 +32,20 @@ export const useDocumentFetcher = (showToast?: (message: string, type: ToastType
       } catch (error: any) {
         console.error('Failed to fetch docs:', error);
         let message = 'Failed to fetch documents from ' + selectedSource;
+
+        // More specific error handling
         if (error.message?.includes('401') || error.message?.includes('403') || error.message?.includes('token')) {
           message = `Authentication expired for ${selectedSource}. Please reconnect.`;
-        } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
-          message = `Network error: Unable to reach ${selectedSource}.`;
+        } else if (error.message?.includes('network') || error.message?.includes('fetch') || error.code === 'ENOENT') {
+          message = `Network error: Unable to reach ${selectedSource}. Check your connection.`;
+        } else if (error.message?.includes('rate limit') || error.code === 'AGAIN') {
+          message = `${selectedSource} rate limit reached. Please try again later.`;
+        } else if (error.message) {
+          message = `${selectedSource} error: ${error.message}`;
         }
+
         showToast?.(message, 'error');
+        setDocuments([]); // Clear documents on error to avoid showing stale data
       } finally {
         setLoading(false);
       }

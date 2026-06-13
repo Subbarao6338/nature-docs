@@ -29,6 +29,7 @@ interface DocState {
   setSelectedDoc: (doc: DocItem | null) => void;
   setLoading: (loading: boolean) => void;
   removeDocument: (docId: string) => void;
+  clearDocuments: () => void;
   triggerRefresh: () => void;
 
   // Theme actions
@@ -112,6 +113,11 @@ export const useDocStore = create<DocState>()(
         documents: state.documents.filter(d => d.id !== docId),
         selectedDoc: state.selectedDoc?.id === docId ? null : state.selectedDoc
       })),
+
+      clearDocuments: () => set({
+        documents: [],
+        selectedDoc: null
+      }),
 
       triggerRefresh: () => set((state) => ({
         refreshTrigger: state.refreshTrigger + 1

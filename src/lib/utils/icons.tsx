@@ -38,6 +38,16 @@ export const getFileIconInfo = (type: string, name: string): IconInfo => {
     };
   }
 
+  // Text files
+  if (lowercaseType.includes('plain') || lowercaseName.endsWith('.txt')) {
+    return {
+      icon: FileText,
+      color: 'text-on-surface-variant',
+      bgColor: 'bg-surface-variant/20',
+      label: 'Text'
+    };
+  }
+
   // HTML
   if (lowercaseType.includes('html') || lowercaseName.endsWith('.html')) {
     return {
